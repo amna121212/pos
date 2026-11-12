@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Restaurants &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>Restaurants</h1>
+    <div class="sub">
+      {{ rows|length }} {{ 'restaurant' if rows|length == 1 else 'restaurants' }}
+      {% if not can_open_any %}you have access to{% endif %}
+      &middot; {{ rows|sum(attribute='branch_count') }} branches
+    </div>
+  </div>
+  <div class="page-actions">
+    {% if has_permission('branch.manage') %}
+      <a class="btn" href="{{ url_for('admin.branches') }}">Branch settings</a>
+    {% endif %}
+  </div>
+</div>
+
+<form class="toolbar" method="get" action="{{ url_for('restaurants.index') }}">
+  <div class="field search">
+    <label for="q">Search restaurants</label>
+    <input type="search" id="q" name="q" value="{{ search }}" placeholder="Name, city or type" autocomplete="off">
+  </div>
+  <button class="btn primary" type="submit">Search</button>
+  {% if search %}<a class="btn ghost" href="{{ url_for('restaurants.index') }}">Clear</a>{% endif %}
+</form>
+
+{% if not rows %}
+  <div class="card"><div class="empty">
+    <strong>No restaurants match</strong>
+    {% if search %}Nothing found for “{{ search }}”.{% else %}No restaurant is available to this account.{% endif %}
+  </div></div>
+{% endif %}
+
+{% for row in rows %}
+  {% set business = row.business %}
+  <div class="card restaurant-card {{ 'is-current' if row.selected }}">
+    <header>
+      <div>
+        <h2>
+          {{ business.name }}
+          {% if row.selected %}<span class="badge info">Working restaurant</span>{% endif %}
+        </h2>
+        <div class="hint">
+          {{ business.business_type|label }} &middot; {{ business.city }}
+          &middot; {{ row.branch_count }} {{ 'branch' if row.branch_count == 1 else 'branches' }}
+          &middot; {{ row.product_count }} products
+          &middot; {{ row.people }} staff
+          {% if row.settings %} &middot; {{ row.settings.currency_code }}{% endif %}
+        </div>
+      </div>
+      <div class="page-actions">
+        <a class="btn ghost small" href="{{ url_for('restaurants.detail', business_id=business.id) }}">Details</a>
+        {% if not row.selected or can_open_any %}
+          <form method="post" action="{{ url_for('restaurants.open') }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <input type="hidden" name="business_id" value="{{ business.id }}">
+            <button class="btn {{ 'primary' if not row.selected else '' }} small" type="submit">
+              {{ 'Open' if not row.selected else 'Switch to' }}
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </header>
+
+    {% if row.branches %}
+      <div class="body flush">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Branch</th>
+                <th>Area</th>
+                <th>Hours</th>
+                <th>Status</th>
+                <th class="num">30-day orders</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for branch in row.branches %}
+                <tr class="{{ 'is-current' if branch.id == current_branch_id and row.selected }}">
+                  <td>
+                    <span class="mono">{{ branch.code }}</span> {{ branch.name }}
+                    {% if branch.id == current_branch_id and row.selected %}
+                      <span class="badge ok">Active</span>
+                    {% endif %}
+                  </td>
+                  <td class="muted">{{ branch.area }}</td>
+                  <td class="muted nowrap">{{ hours.get(branch.id, '—') }}</td>
+                  <td>
+                    <span class="badge {{ 'ok' if branch.is_active else 'muted' }}">
+                      {{ 'Open' if branch.is_active else 'Closed' }}
+                    </span>
+                  </td>
+                  <td class="num">{{ branch_orders.get(branch.id, 0) }}</td>
+                  <td class="actions">
+                    <form method="post" action="{{ url_for('restaurants.open') }}">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <input type="hidden" name="business_id" value="{{ business.id }}">
+                      <input type="hidden" name="branch_id" value="{{ branch.id }}">
+                      <button class="btn small" type="submit">Open branch</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% else %}
+      <div class="body"><div class="empty"><strong>No branches yet</strong>Add a branch to start trading.</div></div>
+    {% endif %}
+  </div>
+{% endfor %}
+{% endblock %}

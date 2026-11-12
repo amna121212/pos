@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ code }} &middot; Amna POS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <style>
+    .err-wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+    .err-box { max-width: 460px; text-align: center; }
+    .err-box .code { font-size: 44px; font-weight: 600; letter-spacing: -0.03em; color: #c3cedb; }
+    .err-box h1 { font-size: 18px; margin: 6px 0 8px; }
+    .err-box p { color: #66748a; font-size: 13.5px; }
+  </style>
+</head>
+<body>
+  <div class="err-wrap">
+    <div class="err-box">
+      <div class="code">{{ code }}</div>
+      <h1>{{ heading }}</h1>
+      <p>{{ message }}</p>
+      <p><a class="btn" href="{{ url_for('dashboard.index') }}">Back to dashboard</a></p>
+    </div>
+  </div>
+</body>
+</html>

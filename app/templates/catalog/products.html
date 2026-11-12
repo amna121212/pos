@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Products &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>Products</h1>
+    <div class="sub">{{ total }} {{ 'product' if total == 1 else 'products' }} &middot; prices shown for {{ ctx.branch.code }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('catalog.categories') }}">Categories</a>
+    {% if can_manage %}
+      <a class="btn primary" href="{{ url_for('catalog.product_new') }}">Add product</a>
+    {% endif %}
+  </div>
+</div>
+
+<form class="toolbar" method="get" action="{{ url_for('catalog.products') }}">
+  <div class="field search">
+    <label for="q">Search</label>
+    <input type="search" id="q" name="q" value="{{ search }}" placeholder="Name or SKU">
+  </div>
+  <div class="field">
+    <label for="category">Category</label>
+    <select id="category" name="category">
+      <option value="">All</option>
+      {% for category in categories %}
+        <option value="{{ category.id }}" {{ 'selected' if category.id == category_id }}>{{ category.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="active">Status</label>
+    <select id="active" name="active">
+      <option value="yes" {{ 'selected' if active == 'yes' }}>Active</option>
+      <option value="no" {{ 'selected' if active == 'no' }}>Retired</option>
+      <option value="all" {{ 'selected' if active == 'all' }}>All</option>
+    </select>
+  </div>
+  <button class="btn primary" type="submit">Filter</button>
+</form>
+
+<div class="card">
+  <div class="body flush">
+    {% if products %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th class="num">Branch price</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+              {% set price = prices.get(product.id) %}
+              <tr class="{{ '' if product.is_active else 'is-muted' }}">
+                <td class="mono">{{ product.sku }}</td>
+                <td>{{ product.name }}</td>
+                <td class="muted">{{ product.category.name if product.category else '—' }}</td>
+                <td class="muted">{{ product.kind|label }}</td>
+                <td class="num">
+                  {% if price %}{{ price.sale_price|pkr }}{% else %}<span class="faint">not listed</span>{% endif %}
+                </td>
+                <td>
+                  <span class="badge {{ 'ok' if product.is_active else 'muted' }}">{{ 'Active' if product.is_active else 'Retired' }}</span>
+                </td>
+                <td class="actions">
+                  {% if can_manage %}
+                    <a class="btn ghost small" href="{{ url_for('catalog.product_edit', product_id=product.id) }}">Edit</a>
+                    <form method="post" action="{{ url_for('catalog.product_toggle', product_id=product.id) }}" class="inline-form">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <button class="btn ghost small" type="submit">{{ 'Retire' if product.is_active else 'Activate' }}</button>
+                    </form>
+                  {% else %}
+                    <span class="faint">view only</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if pages > 1 %}
+        <div class="pager">
+          <span>Page {{ page }} of {{ pages }}</span>
+          <span class="links">
+            {% if page > 1 %}<a class="btn small" href="{{ url_for('catalog.products', page=page-1, q=search, category=category_id, active=active) }}">Previous</a>{% endif %}
+            {% if page < pages %}<a class="btn small" href="{{ url_for('catalog.products', page=page+1, q=search, category=category_id, active=active) }}">Next</a>{% endif %}
+          </span>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="empty"><strong>No products found</strong>Adjust the filters or add a product.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

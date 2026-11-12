@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Secrets and local configuration — never commit these
+.env
+.env.*
+!.env.example
+instance/
+config/pos.env
+*.pem
+*.key
+
+# Local database and editor noise
+*.sqlite3
+*.dump
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

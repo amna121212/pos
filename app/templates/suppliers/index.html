@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Suppliers &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Suppliers</h1>
+    <div class="sub">{{ suppliers|length }} {{ 'supplier' if suppliers|length == 1 else 'suppliers' }} for {{ current_context().business.name }}</div>
+  </div>
+  <div class="page-actions">
+    {% if has_permission('inventory.purchase') %}
+      <a class="btn" href="{{ url_for('inventory.purchases') }}">Purchase orders</a>
+      <a class="btn primary" href="{{ url_for('suppliers.new') }}">Add supplier</a>
+    {% endif %}
+  </div>
+</div>
+
+<form class="toolbar" method="get" action="{{ url_for('suppliers.index') }}">
+  <div class="field search">
+    <label for="q">Search</label>
+    <input type="search" id="q" name="q" value="{{ search }}" placeholder="Supplier name or city" autocomplete="off">
+  </div>
+  <button class="btn primary" type="submit">Search</button>
+  {% if search %}<a class="btn ghost" href="{{ url_for('suppliers.index') }}">Clear</a>{% endif %}
+</form>
+
+<div class="card">
+  <div class="body flush">
+    {% if suppliers %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Supplier</th>
+              <th>City</th>
+              <th class="num">Lead time</th>
+              <th class="num">Purchase orders</th>
+              <th class="num">Ordered value</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for supplier in suppliers %}
+              {% set total = totals.get(supplier.id, {}) %}
+              <tr>
+                <td><a href="{{ url_for('suppliers.detail', supplier_id=supplier.id) }}">{{ supplier.name }}</a></td>
+                <td class="muted">{{ supplier.city }}</td>
+                <td class="num">{{ supplier.lead_time_days }} days</td>
+                <td class="num">{{ total.get('orders', 0) }}</td>
+                <td class="num">{{ total.get('value', 0)|pkr }}</td>
+                <td class="actions">
+                  <a class="btn ghost small" href="{{ url_for('suppliers.detail', supplier_id=supplier.id) }}">View</a>
+                  {% if can_manage %}
+                    <a class="btn ghost small" href="{{ url_for('suppliers.edit', supplier_id=supplier.id) }}">Edit</a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty">
+        <strong>No suppliers{% if search %} match “{{ search }}”{% endif %}</strong>
+        {% if can_manage %}Add a supplier to raise purchase orders against it.{% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

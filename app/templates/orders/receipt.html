@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Receipt {{ order.order_number }} &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+<div class="page-head no-print">
+  <div>
+    <h1>Receipt</h1>
+    <div class="sub">{{ order.order_number }}{% if detail.receipt %} &middot; {{ detail.receipt.receipt_number }}{% endif %}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('orders.show', order_id=order.id) }}">Back to order</a>
+  </div>
+</div>
+
+<div class="receipt-sheet" id="receipt">
+  <div class="center">
+    <strong>{{ business.name }}</strong><br>
+    {% if settings and settings.receipt_header and settings.receipt_header != business.name %}
+      {{ settings.receipt_header }}<br>
+    {% endif %}
+    {{ branch.name }}, {{ branch.city }}
+  </div>
+  <div class="rule"></div>
+  <div class="center" style="font-size:11px">
+    <div>Order {{ order.order_number }}</div>
+    <div>{{ order.created_at|localtime }}</div>
+    <div>{{ order.order_type|label }}</div>
+    {% if detail.receipt %}<div>Receipt {{ detail.receipt.receipt_number }}</div>{% endif %}
+  </div>
+  <div class="rule"></div>
+
+  {% for item, product in detail.lines %}
+    <div class="line-item">
+      <span>{{ item.quantity }} &times; {{ product.name }}</span>
+      <span>{{ item.line_total|pkr }}</span>
+    </div>
+    {% if item.unit_price and item.quantity > 1 %}
+      <div class="sub">@ {{ item.unit_price|pkr }}</div>
+    {% endif %}
+  {% endfor %}
+
+  <div class="rule"></div>
+  <div class="totals-row"><span>Subtotal</span><span>{{ order.subtotal|pkr }}</span></div>
+  {% if order.discount_total > 0 %}
+    <div class="totals-row"><span>Discount</span><span>&minus;{{ order.discount_total|pkr }}</span></div>
+  {% endif %}
+  <div class="totals-row"><span>Tax</span><span>{{ order.tax_total|pkr }}</span></div>
+  <div class="totals-row big"><span>TOTAL</span><span>{{ order.grand_total|pkr }}</span></div>
+  <div class="rule"></div>
+
+  {% for payment, method in detail.payments %}
+    <div class="totals-row"><span>{{ method.label }}</span><span>{{ payment.amount|pkr }}</span></div>
+  {% endfor %}
+  {% if detail.due > 0 %}
+    <div class="totals-row"><span>Balance due</span><span>{{ detail.due|pkr }}</span></div>
+  {% endif %}
+
+  <div class="rule"></div>
+  <div class="center" style="font-size:11px">
+    {% if settings %}{{ settings.receipt_footer }}{% endif %}
+    <div style="margin-top:6px">{{ order.status|label|upper }}</div>
+  </div>
+</div>
+
+<div class="receipt-actions">
+  <button class="btn primary btn-lg" type="button" onclick="window.print()">Print receipt</button>
+  <form method="post" action="{{ url_for('orders.print_receipt', order_id=order.id) }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button class="btn block" type="submit">Record print job</button>
+  </form>
+</div>
+{% endblock %}

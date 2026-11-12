@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Platform &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Businesses</h1>
+    <div class="sub">Platform administration</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('platform.integrity') }}">Data integrity</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="body flush">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Business</th>
+            <th>Type</th>
+            <th>Plan</th>
+            <th class="num">Branches</th>
+            <th class="num">Products</th>
+            <th class="num">Orders</th>
+            <th class="num">People</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in businesses %}
+            <tr>
+              <td>
+                <div>{{ row.business.name }}</div>
+                <small class="faint mono">{{ row.business.slug }}</small>
+              </td>
+              <td class="muted">{{ row.business.business_type|label }}</td>
+              <td>
+                {% if row.plan %}
+                  {{ row.plan.name }}
+                  <div class="faint" style="font-size:11px">
+                    {{ row.plan.monthly_fee_pkr|pkr }} / month &middot; {{ row.subscription.status|label }}
+                  </div>
+                {% else %}
+                  <span class="faint">none</span>
+                {% endif %}
+              </td>
+              <td class="num">{{ row.branches }}</td>
+              <td class="num">{{ row.products }}</td>
+              <td class="num">{{ row.orders }}</td>
+              <td class="num">{{ row.people }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="cols even">
+  <div class="card">
+    <header><h2>Dataset provenance</h2></header>
+    <div class="body flush">
+      <table>
+        <thead><tr><th>Code</th><th>Category</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for manifest in manifests %}
+            <tr>
+              <td class="mono">{{ manifest.code }}</td>
+              <td class="muted">{{ manifest.category|label }}</td>
+              <td><span class="badge {{ manifest.status|badge }}">{{ manifest.status|label }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <header><h2>Roles</h2></header>
+    <div class="body flush">
+      <table>
+        <thead><tr><th>Code</th><th>Label</th><th>Scope</th></tr></thead>
+        <tbody>
+          {% for role in roles %}
+            <tr>
+              <td class="mono">{{ role.code }}</td>
+              <td>{{ role.label }}</td>
+              <td class="muted">{{ role.scope|label }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

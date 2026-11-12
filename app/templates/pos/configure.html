@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} &middot; Amna POS{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>{{ product.name }}</h1>
+    <div class="sub mono">{{ product.sku }} &middot; {{ branch_product.sale_price|pkr }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('pos.index') }}">Back to till</a>
+  </div>
+</div>
+
+<div class="cols even">
+  <form method="post" action="{{ url_for('pos.add') }}" class="card">
+    <header><h2>Options</h2></header>
+    <div class="body">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <input type="hidden" name="product_id" value="{{ product.id }}">
+
+      {% if groups %}
+        {% for entry in groups %}
+          <fieldset style="border:0;padding:0;margin:0 0 14px">
+            <legend style="font-size:12px;font-weight:500;color:#35485c;padding:0">
+              {{ entry.group.name }}
+              {% if entry.group.is_required %}<span class="req">*</span>{% endif %}
+            </legend>
+            {% for option in entry.options %}
+              <label class="check" style="margin-top:5px">
+                <input type="checkbox" name="option" value="{{ option.id }}"
+                       data-price="{{ option.extra_price }}">
+                <span>{{ option.name }}</span>
+                <span class="faint">
+                  {% if option.extra_price and option.extra_price > 0 %}+{{ option.extra_price|pkr }}{% else %}included{% endif %}
+                </span>
+              </label>
+            {% endfor %}
+          </fieldset>
+        {% endfor %}
+      {% else %}
+        <p class="muted">This item has no options to choose.</p>
+      {% endif %}
+
+      <div class="form-row">
+        <label for="qty">Quantity</label>
+        <input type="number" id="qty" name="qty" value="1" min="1" max="999" style="max-width:120px">
+      </div>
+      <div class="note mb0">
+        Line total <b id="line-total">{{ branch_product.sale_price|pkr }}</b>
+      </div>
+    </div>
+    <div class="body" style="border-top:1px solid var(--line)">
+      <button class="btn primary block" type="submit">Add to bill</button>
+    </div>
+  </form>
+
+  <div class="card">
+    <header><h2>Item details</h2></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>SKU</dt><dd class="mono">{{ product.sku }}</dd>
+        <dt>Category</dt><dd>{{ product.category.name if product.category }}</dd>
+        <dt>Type</dt><dd>{{ product.kind|label }}</dd>
+        <dt>Branch price</dt><dd class="num">{{ branch_product.sale_price|pkr }}</dd>
+        <dt>Base cost</dt><dd class="num">{{ product.base_cost|pkr }}</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var base = parseFloat("{{ branch_product.sale_price }}") || 0;
+    var qty = document.getElementById('qty');
+    var output = document.getElementById('line-total');
+    function refresh() {
+      var extra = 0;
+      document.querySelectorAll('input[name="option"]:checked').forEach(function (box) {
+        extra += parseFloat(box.getAttribute('data-price')) || 0;
+      });
+      var count = parseInt(qty.value, 10) || 1;
+      var total = (parseFloat(base) + extra) * count;
+      output.textContent = 'Rs ' + total.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    document.querySelectorAll('input[name="option"]').forEach(function (box) {
+      box.addEventListener('change', refresh);
+    });
+    qty.addEventListener('input', refresh);
+    refresh();
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Orders &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Orders</h1>
+    <div class="sub">{{ total }} {{ 'order' if total == 1 else 'orders' }}{% if status %} &middot; {{ status|label }}{% endif %}</div>
+  </div>
+  <div class="page-actions">
+    {% if has_permission('order.create') %}
+      <a class="btn primary" href="{{ url_for('pos.index') }}">New sale</a>
+    {% endif %}
+  </div>
+</div>
+
+<form class="toolbar" method="get" action="{{ url_for('orders.index') }}">
+  <div class="field wide">
+    <label for="q">Order number</label>
+    <input type="search" id="q" name="q" value="{{ search }}" placeholder="ORD-JT-00001">
+  </div>
+  <div class="field">
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      <option value="">Any</option>
+      {% for value in statuses %}
+        <option value="{{ value }}" {{ 'selected' if value == status }}>{{ value|label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="start">From</label>
+    <input type="date" id="start" name="start" value="{{ start or '' }}">
+  </div>
+  <div class="field">
+    <label for="end">To</label>
+    <input type="date" id="end" name="end" value="{{ end or '' }}">
+  </div>
+  <button class="btn primary" type="submit">Apply</button>
+  <a class="btn ghost" href="{{ url_for('orders.index') }}">Reset</a>
+</form>
+
+<div class="card">
+  <div class="body flush">
+    {% if orders %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th class="num">Subtotal</th>
+              <th class="num">Tax</th>
+              <th class="num">Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('orders.show', order_id=order.id) }}" class="mono">{{ order.order_number }}</a>
+                  {% if order.dataset_code == 'SYNTHETIC_HISTORY_V1' %}
+                    <div class="faint" style="font-size:10.5px">demo history</div>
+                  {% endif %}
+                </td>
+                <td class="muted">{{ order.order_type|label }}</td>
+                <td><span class="badge {{ order.status|badge }}">{{ order.status|label }}</span></td>
+                <td class="nowrap muted">{{ order.created_at|localtime }}</td>
+                <td class="num">{{ order.subtotal|pkr }}</td>
+                <td class="num">{{ order.tax_total|pkr }}</td>
+                <td class="num"><b>{{ order.grand_total|pkr }}</b></td>
+                <td class="actions">
+                  <a class="btn ghost small" href="{{ url_for('orders.show', order_id=order.id) }}">Open</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if pages > 1 %}
+        <div class="pager">
+          <span>Page {{ page }} of {{ pages }}</span>
+          <span class="links">
+            {% if page > 1 %}
+              <a class="btn small" href="{{ url_for('orders.index', page=page-1, status=status, q=search, start=start, end=end) }}">Previous</a>
+            {% endif %}
+            {% if page < pages %}
+              <a class="btn small" href="{{ url_for('orders.index', page=page+1, status=status, q=search, start=start, end=end) }}">Next</a>
+            {% endif %}
+          </span>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="empty"><strong>No orders found</strong>Change the filters or take a sale at the till.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

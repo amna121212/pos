@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Categories &middot; Amna POS{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Categories</h1>
+    <div class="sub">{{ rows|length }} {{ 'category' if rows|length == 1 else 'categories' }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('catalog.products') }}">Products</a>
+  </div>
+</div>
+
+<div class="cols even">
+  <div class="card">
+    <header><h2>All categories</h2></header>
+    <div class="body flush">
+      {% if rows %}
+        <table>
+          <thead><tr><th>Category</th><th class="num">Products</th><th></th></tr></thead>
+          <tbody>
+            {% for category, count in rows %}
+              <tr>
+                <td>{{ category.name }}</td>
+                <td class="num">{{ count }}</td>
+                <td class="actions">
+                  {% if can_manage %}
+                    <form method="post" action="{{ url_for('catalog.category_edit', category_id=category.id) }}" style="display:flex;gap:5px;justify-content:flex-end">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <input type="text" name="name" value="{{ category.name }}" maxlength="100" style="width:150px">
+                      <button class="btn small" type="submit">Rename</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty"><strong>No categories</strong>Add one to start listing products.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if can_manage %}
+    <form method="post" class="card">
+      <header><h2>Add category</h2></header>
+      <div class="body">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <div class="form-row">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" maxlength="100" required>
+        </div>
+        <button class="btn primary" type="submit">Add category</button>
+      </div>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

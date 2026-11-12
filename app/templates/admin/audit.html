@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Audit log &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Audit log</h1>
+    <div class="sub">{{ events|length }} entries &middot; newest first, never edited or deleted</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('admin.staff') }}">Staff</a>
+  </div>
+</div>
+
+<form class="toolbar" method="get" action="{{ url_for('admin.audit') }}">
+  <div class="field">
+    <label for="action">Action</label>
+    <select id="action" name="action" onchange="this.form.submit()">
+      <option value="">All actions</option>
+      {% for value in actions %}
+        <option value="{{ value }}" {{ 'selected' if value == action }}>{{ value|label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="spacer"></div>
+  {% if action %}<a class="btn ghost" href="{{ url_for('admin.audit') }}">Clear</a>{% endif %}
+</form>
+
+<div class="card">
+  <div class="body flush">
+    {% if events %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>When</th><th>Action</th><th>Entity</th><th>Message</th><th class="num">Actor</th></tr></thead>
+          <tbody>
+            {% for event in events %}
+              <tr>
+                <td class="muted nowrap">{{ event.created_at|localtime }}</td>
+                <td><span class="badge muted">{{ event.action|label }}</span></td>
+                <td class="muted">{{ event.entity_type }}{% if event.entity_id %} #{{ event.entity_id }}{% endif %}</td>
+                <td>{{ event.message }}</td>
+                <td class="num muted">{{ event.actor_user_id or '—' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>No audit entries</strong>Recorded actions appear here.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

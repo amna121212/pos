@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}Reports &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>Reports</h1>
+    <div class="sub" id="report-heading">
+      {{ labels.business }} &middot; {{ labels.branch }} &middot; {{ labels.period }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <button class="btn" type="button" id="report-print" onclick="window.print()">Print</button>
+    <a class="btn" href="{{ url_for('reports.index') }}" id="report-reset">Reset filters</a>
+  </div>
+</div>
+
+<form class="toolbar report-filters" id="report-filters" method="get" action="{{ url_for('reports.index') }}">
+  {% if ctx.can_switch_business %}
+    <div class="field">
+      <label for="filter-business">Restaurant</label>
+      <select id="filter-business" name="business">
+        {% for business in options.businesses %}
+          <option value="{{ business.id }}" {{ 'selected' if business.id == ctx.business_id }}>{{ business.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  {% endif %}
+  <div class="field">
+    <label for="filter-branch">Branch</label>
+    <select id="filter-branch" name="branch">
+      <option value="all" {{ 'selected' if raw.branch == 'all' }}>All branches</option>
+      {% for branch in options.branches %}
+        <option value="{{ branch.id }}" {{ 'selected' if raw.branch == branch.id|string }}>{{ branch.code }} &middot; {{ branch.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="filter-from">From</label>
+    <input type="date" id="filter-from" name="from" value="{{ raw.from }}">
+  </div>
+  <div class="field">
+    <label for="filter-to">To</label>
+    <input type="date" id="filter-to" name="to" value="{{ raw.to }}">
+  </div>
+  <div class="field">
+    <label for="filter-group">Series</label>
+    <select id="filter-group" name="group">
+      {% for value in options.granularities %}
+        <option value="{{ value }}" {{ 'selected' if raw.group == value }}>{{ value|label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="filter-status">Orders</label>
+    <select id="filter-status" name="status">
+      <option value="paid" {{ 'selected' if raw.status == 'paid' }}>Paid only</option>
+      <option value="settled" {{ 'selected' if raw.status == 'settled' }}>Paid and part paid</option>
+      <option value="all" {{ 'selected' if raw.status == 'all' }}>Every status</option>
+    </select>
+  </div>
+  <div class="field checkbox">
+    <label class="check" style="margin-top:22px">
+      <input type="checkbox" id="filter-compare" name="compare" value="1" {{ 'checked' if raw.compare == '1' }}>
+      <span>Compare to previous</span>
+    </label>
+  </div>
+  <div class="field tight">
+    <button class="btn" type="button" id="filter-apply">Apply</button>
+  </div>
+</form>
+
+<form class="toolbar report-filters" id="report-filters-2" method="get" action="{{ url_for('reports.index') }}">
+  <div class="field">
+    <label for="filter-category">Category</label>
+    <select id="filter-category" name="category">
+      <option value="">All categories</option>
+      {% for category in options.categories %}
+        <option value="{{ category.id }}" {{ 'selected' if raw.category == category.id|string }}>{{ category.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="filter-payment">Payment method</label>
+    <select id="filter-payment" name="payment">
+      <option value="">All methods</option>
+      {% for method in options.payment_methods %}
+        <option value="{{ method.id }}" {{ 'selected' if raw.payment == method.id|string }}>{{ method.label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="filter-employee">Employee</label>
+    <select id="filter-employee" name="employee">
+      <option value="">Everyone</option>
+      {% for person in options.employees %}
+        <option value="{{ person.id }}" {{ 'selected' if raw.employee == person.id|string }}>{{ person.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="filter-supplier">Supplier</label>
+    <select id="filter-supplier" name="supplier">
+      <option value="">All suppliers</option>
+      {% for supplier in options.suppliers %}
+        <option value="{{ supplier.id }}" {{ 'selected' if raw.supplier == supplier.id|string }}>{{ supplier.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="filter-limit">Rows per list</label>
+    <select id="filter-limit" name="limit">
+      {% for value in [10, 15, 25, 50] %}
+        <option value="{{ value }}" {{ 'selected' if raw.limit == value|string }}>{{ value }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="spacer"></div>
+</form>
+
+<div class="report-status" id="report-status" hidden>
+  <span class="report-status-text" id="report-status-text">Loading</span>
+</div>
+
+<div class="report-banner" id="report-error" hidden>
+  <div>
+    <b>Report could not be loaded.</b>
+    <span id="report-error-text"></span>
+  </div>
+</div>
+
+<noscript>
+  <div class="card"><div class="empty">
+    <strong>JavaScript is required for the report panels</strong>
+    The aggregates are available at <code>/reports/api/data</code> with the same query string.
+  </div></div>
+</noscript>
+
+<div id="report-body">
+  <section class="card report-card" data-section="overview">
+    <header><h2>Sales overview</h2><span class="hint" data-role="period"></span></header>
+    <div class="body" data-role="content"><div class="skeleton skeleton-stats"></div></div>
+  </section>
+
+  <section class="card report-card" data-section="daily">
+    <header><h2>Daily sales</h2><span class="hint" data-role="caption"></span></header>
+    <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+  </section>
+
+  <div class="report-pair">
+    <section class="card report-card" data-section="weekly">
+      <header><h2>Weekly sales</h2></header>
+      <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+    </section>
+    <section class="card report-card" data-section="monthly">
+      <header><h2>Monthly sales</h2></header>
+      <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+    </section>
+  </div>
+
+  <section class="card report-card" data-section="branches">
+    <header><h2>Branch comparison</h2><span class="hint" data-role="caption"></span></header>
+    <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+  </section>
+
+  <div class="report-pair">
+    <section class="card report-card" data-section="products">
+      <header><h2>Product performance</h2><span class="hint" data-role="caption"></span></header>
+      <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+    </section>
+    <section class="card report-card" data-section="categories">
+      <header><h2>Category performance</h2></header>
+      <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+    </section>
+  </div>
+
+  <div class="report-pair">
+    <section class="card report-card" data-section="payments">
+      <header><h2>Payment methods</h2></header>
+      <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+    </section>
+    <section class="card report-card" data-section="discounts">
+      <header><h2>Discounts</h2></header>
+      <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+    </section>
+  </div>
+
+  <div class="report-pair">
+    <section class="card report-card" data-section="cancelled">
+      <header><h2>Cancelled and refunded</h2></header>
+      <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+    </section>
+    <section class="card report-card" data-section="cashiers">
+      <header><h2>Cashier performance</h2></header>
+      <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+    </section>
+  </div>
+
+  <div class="report-pair">
+    <section class="card report-card" data-section="stock">
+      <header><h2>Stock consumption</h2></header>
+      <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+    </section>
+    <section class="card report-card" data-section="low_stock">
+      <header><h2>Low stock</h2><span class="hint" data-role="caption"></span></header>
+      <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+    </section>
+  </div>
+
+  <section class="card report-card" data-section="purchases">
+    <header><h2>Purchases and suppliers</h2><span class="hint" data-role="caption"></span></header>
+    <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+  </section>
+
+  <section class="card report-card" data-section="operations">
+    <header><h2>Operational summary</h2><span class="hint" data-role="caption"></span></header>
+    <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+  </section>
+
+  <section class="card report-card" data-section="provenance">
+    <header><h2>Data provenance</h2></header>
+    <div class="body" data-role="content"><div class="skeleton skeleton-block"></div></div>
+  </section>
+</div>
+
+<script id="report-bootstrap" type="application/json">
+{{ {"raw": raw, "labels": labels, "sections": sections, "canSwitchBusiness": ctx.can_switch_business, "businessId": ctx.business_id} | tojson }}
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+{% endblock %}

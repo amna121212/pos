@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Refunds &middot; Amna POS{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Refunds and returns</h1>
+    <div class="sub">Posted returns stay in the ledger and restore stock.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="body flush">
+    {% if rows %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Return</th>
+              <th>Order</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Reason</th>
+              <th>Posted</th>
+              <th class="num">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sales_return, order in rows %}
+              <tr>
+                <td class="mono">{{ sales_return.return_number }}</td>
+                <td><a href="{{ url_for('orders.show', order_id=order.id) }}" class="mono">{{ order.order_number }}</a></td>
+                <td class="muted">{{ sales_return.return_type|label }}</td>
+                <td><span class="badge {{ sales_return.status|badge }}">{{ sales_return.status|label }}</span></td>
+                <td class="muted">{{ sales_return.reason }}</td>
+                <td class="muted nowrap">{{ sales_return.posted_at|localtime }}</td>
+                <td class="num">{{ sales_return.refund_amount|pkr }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>No refunds posted</strong>Open a paid order to refund items.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Staff &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>Staff</h1>
+    <div class="sub">{{ rows|length }} {{ 'account' if rows|length == 1 else 'accounts' }} at {{ ctx.business.name }}</div>
+  </div>
+  <div class="page-actions">
+    {% if can('branch.manage') %}
+      <a class="btn" href="{{ url_for('admin.branches') }}">Branches</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="body flush">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Branch</th>
+            <th>Role</th>
+            <th>Status</th>
+            {% if can_manage %}<th></th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for membership, user, branch in rows %}
+            <tr class="{{ '' if user.is_active else 'is-muted' }}">
+              <td>
+                {{ user.display_name }}
+                {% if user.id == me %}<span class="badge info">you</span>{% endif %}
+              </td>
+              <td class="muted">{{ user.email }}</td>
+              <td class="muted">{{ branch.name if branch else 'All branches' }}</td>
+              <td>
+                {% if can_manage and user.id != me %}
+                  <form method="post" action="{{ url_for('admin.staff_role', membership_id=membership.id) }}" style="display:flex;gap:5px">
+                    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                    <select name="role" style="width:auto">
+                      {% for role in roles %}
+                        <option value="{{ role }}" {{ 'selected' if role == membership.role }}>{{ role|label }}</option>
+                      {% endfor %}
+                    </select>
+                    <button class="btn small" type="submit">Save</button>
+                  </form>
+                {% else %}
+                  <span class="badge muted">{{ membership.role|label }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge {{ 'ok' if user.is_active else 'muted' }}">{{ 'Active' if user.is_active else 'Disabled' }}</span>
+              </td>
+              {% if can_manage %}
+                <td class="actions">
+                  {% if user.id != me %}
+                    <form method="post" action="{{ url_for('admin.staff_active', membership_id=membership.id) }}" class="inline-form">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <button class="btn small" type="submit">{{ 'Disable' if user.is_active else 'Enable' }}</button>
+                    </form>
+                  {% endif %}
+                </td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

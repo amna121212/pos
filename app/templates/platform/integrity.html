@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Data integrity &middot; Amna POS{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Data integrity</h1>
+    <div class="sub">Ledger checks run against the live database</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('platform.index') }}">Businesses</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="body flush">
+    {% if problems %}
+      <table>
+        <thead><tr><th style="width:60px">No.</th><th>Problem</th></tr></thead>
+        <tbody>
+          {% for problem in problems %}
+            <tr>
+              <td class="mono muted">{{ loop.index }}</td>
+              <td>{{ problem }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty">
+        <strong>No integrity problems found</strong>
+        Payments, totals, stock balances and tenant boundaries all reconcile.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

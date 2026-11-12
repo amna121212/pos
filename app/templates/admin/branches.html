@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Branches &middot; Amna POS{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>Branches</h1>
+    <div class="sub">{{ rows|length }} {{ 'branch' if rows|length == 1 else 'branches' }} at {{ ctx.business.name }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('admin.staff') }}">Staff</a>
+  </div>
+</div>
+
+{% for branch in rows %}
+  <div class="card">
+    <header>
+      <h2>{{ branch.code }} &middot; {{ branch.name }}</h2>
+      <span class="badge {{ 'ok' if branch.is_active else 'muted' }}">{{ 'Active' if branch.is_active else 'Closed' }}</span>
+    </header>
+    <div class="body">
+      {% if can_manage %}
+        <form method="post" action="{{ url_for('admin.branch_edit', branch_id=branch.id) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <div class="form-grid three">
+            <div class="form-row">
+              <label for="name-{{ branch.id }}">Name</label>
+              <input type="text" id="name-{{ branch.id }}" name="name" value="{{ branch.name }}" maxlength="120" required>
+            </div>
+            <div class="form-row">
+              <label for="area-{{ branch.id }}">Area</label>
+              <input type="text" id="area-{{ branch.id }}" name="area" value="{{ branch.area }}" maxlength="100" required>
+            </div>
+            <div class="form-row">
+              <label class="check" style="margin-top:22px">
+                <input type="checkbox" name="is_active" value="1" {{ 'checked' if branch.is_active }}>
+                <span>Open for trading</span>
+              </label>
+            </div>
+          </div>
+          <button class="btn primary small" type="submit">Save branch</button>
+        </form>
+      {% else %}
+        <dl class="kv">
+          <dt>Area</dt><dd>{{ branch.area }}</dd>
+          <dt>City</dt><dd>{{ branch.city }}</dd>
+        </dl>
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}
+{% endblock %}

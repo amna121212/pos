@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Ingredients &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>Ingredients</h1>
+    <div class="sub">{{ items|length }} stock items &middot; quantities at {{ ctx.branch.code }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('inventory.recipes') }}">Recipes</a>
+    <a class="btn" href="{{ url_for('inventory.index') }}">Branch stock</a>
+  </div>
+</div>
+
+<form class="toolbar" method="get" action="{{ url_for('inventory.ingredients') }}">
+  <div class="field search">
+    <label for="q">Search</label>
+    <input type="search" id="q" name="q" value="{{ search }}" placeholder="Ingredient name or SKU" autocomplete="off">
+  </div>
+  <button class="btn primary" type="submit">Search</button>
+  {% if search %}<a class="btn ghost" href="{{ url_for('inventory.ingredients') }}">Clear</a>{% endif %}
+</form>
+
+<div class="card">
+  <div class="body flush">
+    {% if items %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>SKU</th><th>Ingredient</th><th>Unit</th>
+              <th class="num">On hand</th><th class="num">Reorder at</th>
+              <th class="num">Standard cost</th><th class="num">Used in recipes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+              {% set quantity = stock.get(item.id) %}
+              <tr>
+                <td class="mono">{{ item.sku }}</td>
+                <td>{{ item.name }}</td>
+                <td class="muted">{{ item.unit }}</td>
+                <td class="num">
+                  {% if quantity is not none %}{{ quantity|qty }}{% else %}<span class="faint">not stocked</span>{% endif %}
+                </td>
+                <td class="num muted">{{ item.reorder_level|qty }}</td>
+                <td class="num">{{ item.standard_cost|pkr }}</td>
+                <td class="num">{{ used_in.get(item.id, 0) or '—' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>No ingredients{% if search %} match “{{ search }}”{% endif %}</strong></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

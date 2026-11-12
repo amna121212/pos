@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Transfers &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Stock transfers</h1>
+    <div class="sub">Movements between branches of this business</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn primary" href="{{ url_for('inventory.transfer_new') }}">New transfer</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="body flush">
+    {% if rows %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Transfer</th><th>From</th><th>To</th><th>Status</th><th>Created</th></tr></thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                <td class="mono">{{ row.transfer_number }}</td>
+                <td>{{ branches.get(row.from_branch_id).code if branches.get(row.from_branch_id) else row.from_branch_id }}</td>
+                <td>{{ branches.get(row.to_branch_id).code if branches.get(row.to_branch_id) else row.to_branch_id }}</td>
+                <td><span class="badge {{ row.status|badge }}">{{ row.status|label }}</span></td>
+                <td class="muted nowrap">{{ row.created_at|localtime }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>No transfers</strong>Move stock between branches here.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

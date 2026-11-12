@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Stock &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>Stock</h1>
+    <div class="sub">{{ total }} {{ 'item' if total == 1 else 'items' }} at {{ ctx.branch.code }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('inventory.movements') }}">Movements</a>
+    {% if has_permission('inventory.adjust') %}
+      <a class="btn primary" href="{{ url_for('inventory.adjust') }}">Adjust stock</a>
+    {% endif %}
+  </div>
+</div>
+
+<form class="toolbar" method="get" action="{{ url_for('inventory.index') }}">
+  <div class="field search">
+    <label for="q">Search</label>
+    <input type="search" id="q" name="q" value="{{ search }}" placeholder="Item name or SKU">
+  </div>
+  <div class="field">
+    <label class="check" style="margin-top:22px">
+      <input type="checkbox" name="low" value="1" {{ 'checked' if low_only }}>
+      <span>Below reorder level only</span>
+    </label>
+  </div>
+  <button class="btn primary" type="submit">Filter</button>
+  <a class="btn ghost" href="{{ url_for('inventory.index') }}">Reset</a>
+</form>
+
+<div class="card">
+  <div class="body flush">
+    {% if rows %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Item</th>
+              <th class="num">On hand</th>
+              <th>Unit</th>
+              <th class="num">Reorder level</th>
+              <th class="num">Standard cost</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for stock, item in rows %}
+              <tr>
+                <td class="mono">{{ item.sku }}</td>
+                <td>{{ item.name }}</td>
+                <td class="num"><b>{{ stock.quantity|qty }}</b></td>
+                <td class="muted">{{ item.unit }}</td>
+                <td class="num muted">{{ item.reorder_level|qty }}</td>
+                <td class="num">{{ item.standard_cost|pkr }}</td>
+                <td>
+                  {% if stock.quantity <= item.reorder_level %}
+                    <span class="badge warn">Reorder</span>
+                  {% else %}
+                    <span class="badge ok">In stock</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if pages > 1 %}
+        <div class="pager">
+          <span>Page {{ page }} of {{ pages }}</span>
+          <span class="links">
+            {% if page > 1 %}<a class="btn small" href="{{ url_for('inventory.index', page=page-1, q=search, low='1' if low_only else '') }}">Previous</a>{% endif %}
+            {% if page < pages %}<a class="btn small" href="{{ url_for('inventory.index', page=page+1, q=search, low='1' if low_only else '') }}">Next</a>{% endif %}
+          </span>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="empty"><strong>No stock records</strong>No items match this filter at the branch.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

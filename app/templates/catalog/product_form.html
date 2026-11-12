@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit product' if product else 'Add product' }} &middot; Amna POS{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ 'Edit product' if product else 'Add product' }}</h1>
+    <div class="sub">{% if product %}{{ product.sku }}{% else %}The price set here applies to the current branch.{% endif %}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('catalog.products') }}">Back to products</a>
+  </div>
+</div>
+
+<form method="post" class="card" style="max-width:720px">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <div class="body">
+    <div class="form-grid">
+      <div class="form-row">
+        <label for="name">Name <span class="req">*</span></label>
+        <input type="text" id="name" name="name" value="{{ product.name if product else '' }}" required maxlength="130">
+      </div>
+      <div class="form-row">
+        <label for="sku">SKU <span class="req">*</span></label>
+        <input type="text" id="sku" name="sku" value="{{ product.sku if product else '' }}"
+               maxlength="35" {{ 'readonly' if product }} required>
+        {% if product %}<div class="field-help">The SKU cannot be changed after the product is created.</div>{% endif %}
+      </div>
+      <div class="form-row">
+        <label for="category_id">Category <span class="req">*</span></label>
+        <select id="category_id" name="category_id" required>
+          <option value="">Choose</option>
+          {% for category in categories %}
+            <option value="{{ category.id }}" {{ 'selected' if product and product.category_id == category.id }}>{{ category.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="kind">Type</label>
+        <select id="kind" name="kind">
+          {% for value in kinds %}
+            <option value="{{ value }}" {{ 'selected' if product and product.kind == value }}>{{ value|label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="sale_price">Branch sale price <span class="req">*</span></label>
+        <input type="number" step="0.01" min="0" id="sale_price" name="sale_price"
+               value="{{ price.sale_price if price else '' }}" required>
+      </div>
+      <div class="form-row">
+        <label for="base_cost">Base cost</label>
+        <input type="number" step="0.01" min="0" id="base_cost" name="base_cost"
+               value="{{ product.base_cost if product else '0' }}">
+      </div>
+    </div>
+
+    {% if product and price %}
+      <div class="form-row">
+        <label class="check">
+          <input type="checkbox" name="is_available" value="1" {{ 'checked' if price.is_available }}>
+          <span>Available at this branch</span>
+        </label>
+      </div>
+    {% endif %}
+  </div>
+  <div class="body" style="border-top:1px solid var(--line);display:flex;gap:8px">
+    <button class="btn primary" type="submit">{{ 'Save changes' if product else 'Add product' }}</button>
+    <a class="btn" href="{{ url_for('catalog.products') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

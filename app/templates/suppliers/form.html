@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit supplier' if supplier else 'Add supplier' }} &middot; Amna POS{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ 'Edit supplier' if supplier else 'Add supplier' }}</h1>
+    <div class="sub">{% if supplier %}{{ supplier.name }}{% else %}Used for purchase orders and goods received.{% endif %}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('suppliers.index') }}">Back to suppliers</a>
+  </div>
+</div>
+
+<form method="post" class="card" style="max-width:620px"
+      action="{{ url_for('suppliers.edit', supplier_id=supplier.id) if supplier else url_for('suppliers.new') }}">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <div class="body">
+    <div class="form-row">
+      <label for="name">Supplier name <span class="req">*</span></label>
+      <input type="text" id="name" name="name" value="{{ values.name }}" maxlength="130" required autofocus>
+    </div>
+    <div class="form-grid">
+      <div class="form-row">
+        <label for="city">City</label>
+        <input type="text" id="city" name="city" value="{{ values.city }}" maxlength="80" list="city-options">
+        <datalist id="city-options">
+          {% for city in cities %}<option value="{{ city }}">{% endfor %}
+        </datalist>
+      </div>
+      <div class="form-row">
+        <label for="lead_time_days">Lead time (days)</label>
+        <input type="number" min="0" max="365" id="lead_time_days" name="lead_time_days" value="{{ values.lead_time_days }}">
+      </div>
+    </div>
+  </div>
+  <div class="body" style="border-top:1px solid var(--line);display:flex;gap:8px">
+    <button class="btn primary" type="submit">{{ 'Save supplier' if supplier else 'Add supplier' }}</button>
+    <a class="btn" href="{{ url_for('suppliers.index') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

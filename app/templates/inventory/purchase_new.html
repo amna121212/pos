@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}New purchase order &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Raise purchase order</h1>
+    <div class="sub">Stock is added to the branch when the order is received.</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('inventory.purchases') }}">Back to purchasing</a>
+  </div>
+</div>
+
+<form method="post" class="card">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <div class="body">
+    <div class="form-row" style="max-width:420px">
+      <label for="supplier_id">Supplier <span class="req">*</span></label>
+      <select id="supplier_id" name="supplier_id" required>
+        <option value="">Choose a supplier</option>
+        {% for supplier in suppliers %}
+          <option value="{{ supplier.id }}">{{ supplier.name }} &middot; {{ supplier.city }} &middot; lead {{ supplier.lead_time_days }}d</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="body flush">
+    <table>
+      <thead><tr><th>Item</th><th class="num">Quantity</th><th class="num">Unit cost</th></tr></thead>
+      <tbody>
+        {% for index in rows %}
+          <tr>
+            <td>
+              <select name="item_id_{{ index }}">
+                <option value="">&mdash;</option>
+                {% for item in items %}
+                  <option value="{{ item.id }}">{{ item.sku }} &middot; {{ item.name }} ({{ item.unit }})</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td class="num"><input type="number" step="0.001" min="0" name="qty_{{ index }}" style="max-width:130px;margin-left:auto"></td>
+            <td class="num"><input type="number" step="0.01" min="0" name="cost_{{ index }}" style="max-width:130px;margin-left:auto"></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="body" style="border-top:1px solid var(--line)">
+    <div class="note" style="margin-bottom:10px">Leave rows empty if you need fewer lines.</div>
+    <button class="btn primary" type="submit">Raise purchase order</button>
+  </div>
+</form>
+{% endblock %}

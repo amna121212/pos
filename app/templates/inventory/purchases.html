@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Purchasing &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>Purchasing</h1>
+    <div class="sub">Purchase orders for {{ ctx.branch.name }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn primary" href="{{ url_for('inventory.purchase_new') }}">Raise purchase order</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="body flush">
+    {% if orders %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>PO</th><th>Supplier</th><th>Status</th><th>Raised</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for order, supplier in orders %}
+              <tr>
+                <td class="mono">{{ order.po_number }}</td>
+                <td>{{ supplier.name }}</td>
+                <td><span class="badge {{ order.status|badge }}">{{ order.status|label }}</span></td>
+                <td class="muted nowrap">{{ order.created_at|localtime }}</td>
+                <td class="actions">
+                  {% if order.id in received %}
+                    <span class="badge ok">Received</span>
+                  {% else %}
+                    <form method="post" action="{{ url_for('inventory.purchase_receive', purchase_id=order.id) }}" class="inline-form">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <button class="btn small" type="submit">Receive</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>No purchase orders</strong>Raise one to add stock from a supplier.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

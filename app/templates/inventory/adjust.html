@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Adjust stock &middot; Amna POS{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>Adjust stock</h1>
+    <div class="sub">{{ ctx.branch.name }} &middot; every change writes a movement row</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('inventory.index') }}">Back to stock</a>
+  </div>
+</div>
+
+<form method="post" class="card" style="max-width:620px">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <div class="body">
+    <div class="form-row">
+      <label for="item_id">Item <span class="req">*</span></label>
+      <select id="item_id" name="item_id" required>
+        <option value="">Choose an item</option>
+        {% for item in items %}
+          <option value="{{ item.id }}">{{ item.sku }} &middot; {{ item.name }} ({{ item.unit }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="delta">Quantity change <span class="req">*</span></label>
+      <input type="number" step="0.001" id="delta" name="delta" required placeholder="e.g. -2.5 or 12">
+      <div class="field-help">Use a negative number to reduce stock.</div>
+    </div>
+    <div class="form-row">
+      <label for="reason">Reason <span class="req">*</span></label>
+      <input type="text" id="reason" name="reason" maxlength="150" required placeholder="Wastage, count correction, breakage">
+    </div>
+    <div class="note">
+      Stock cannot go negative unless the business settings allow it.
+    </div>
+  </div>
+  <div class="body" style="border-top:1px solid var(--line)">
+    <button class="btn primary" type="submit">Post adjustment</button>
+  </div>
+</form>
+{% endblock %}

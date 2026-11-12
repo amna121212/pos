@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ supplier.name }} &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ supplier.name }}</h1>
+    <div class="sub">{{ supplier.city }} &middot; lead time {{ supplier.lead_time_days }} days</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('suppliers.index') }}">All suppliers</a>
+    {% if can_manage %}
+      <a class="btn" href="{{ url_for('suppliers.edit', supplier_id=supplier.id) }}">Edit</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="k">Purchase orders</div>
+    <div class="v">{{ orders|length }}</div>
+    <div class="n">Most recent first</div>
+  </div>
+  <div class="stat">
+    <div class="k">Ordered value</div>
+    <div class="v">{{ total_value|pkr }}</div>
+    <div class="n">Across all orders</div>
+  </div>
+  <div class="stat">
+    <div class="k">Received</div>
+    <div class="v">{{ received_count }}</div>
+    <div class="n">Goods receipts posted</div>
+  </div>
+</div>
+
+<div class="card">
+  <header><h2>Purchase orders</h2></header>
+  <div class="body flush">
+    {% if orders %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>PO</th><th>Raised</th><th>Status</th><th class="num">Value</th><th></th></tr></thead>
+          <tbody>
+            {% for order, value in orders %}
+              <tr>
+                <td class="mono">{{ order.po_number }}</td>
+                <td class="muted nowrap">{{ order.created_at|localtime }}</td>
+                <td><span class="badge {{ order.status|badge }}">{{ order.status|label }}</span></td>
+                <td class="num">{{ value|pkr }}</td>
+                <td class="actions">
+                  {% if order.id in received %}
+                    <span class="badge ok">Received</span>
+                  {% elif can_manage %}
+                    <form method="post" action="{{ url_for('inventory.purchase_receive', purchase_id=order.id) }}" class="inline-form">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <button class="btn small" type="submit">Receive</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>No purchase orders</strong>Nothing raised with this supplier yet.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

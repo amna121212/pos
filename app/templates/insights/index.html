@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Insights &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>Insights</h1>
+    <div class="sub">
+      {% if run %}
+        {{ run.run_code }} &middot; {{ run.period_start }} to {{ run.period_end }} &middot; {{ run.engine|label }}
+      {% else %}
+        No analysis stored for {{ ctx.business.name }}
+      {% endif %}
+    </div>
+  </div>
+  <div class="page-actions">
+    <form method="post" action="{{ url_for('insights.refresh') }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button class="btn" type="submit">Refresh analysis</button>
+    </form>
+  </div>
+</div>
+
+<div class="note" style="margin-bottom:14px">
+  <b>Demo history.</b> These figures aggregate the synthetic dataset
+  {{ run.dataset_code if run else 'SYNTHETIC_HISTORY_V1' }}, which is generated for coursework.
+  Recommendations are written by fixed rules over those totals; no language model is called.
+</div>
+
+{% if run %}
+  <div class="cols">
+    <div>
+      <div class="card">
+        <header><h2>Recommendations</h2><span class="hint">{{ recommendations|length }} stored</span></header>
+        <div class="body flush">
+          {% if recommendations %}
+            <table>
+              <thead><tr><th>Priority</th><th>Finding</th></tr></thead>
+              <tbody>
+                {% for row in recommendations %}
+                  <tr>
+                    <td><span class="badge {{ 'bad' if row.priority == 'high' else ('warn' if row.priority == 'medium' else 'muted') }}">{{ row.priority|label }}</span></td>
+                    <td>
+                      <div><b>{{ row.title }}</b></div>
+                      <div class="muted" style="font-size:12.5px">{{ row.detail }}</div>
+                      <div class="faint" style="font-size:11px">{{ row.recommendation_code }} &middot; {{ row.source|label }}</div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="empty"><strong>No recommendations stored</strong>Refresh the analysis to rebuild them.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <header><h2>Estimated gross profit</h2></header>
+        <div class="body flush">
+          {% if leaders %}
+            <table>
+              <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Profit</th></tr></thead>
+              <tbody>
+                {% for row in leaders %}
+                  <tr>
+                    <td>{{ row.name }}<div class="faint mono" style="font-size:11px">{{ row.sku }}</div></td>
+                    <td class="num">{{ row.qty|qty }}</td>
+                    <td class="num">{{ row.profit|pkr }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="empty"><strong>No snapshot rows</strong></div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card">
+        <header><h2>Run detail</h2></header>
+        <div class="body">
+          <dl class="kv">
+            <dt>Engine</dt><dd>{{ run.engine|label }}</dd>
+            <dt>Dataset</dt><dd class="mono">{{ run.dataset_code }}</dd>
+            <dt>Period</dt><dd>{{ run.period_start }} to {{ run.period_end }}</dd>
+            <dt>Status</dt><dd><span class="badge {{ run.status|badge }}">{{ run.status|label }}</span></dd>
+            <dt>Created</dt><dd>{{ run.created_at|localtime }}</dd>
+          </dl>
+          <p class="muted" style="font-size:12.5px;margin-top:10px">{{ run.summary }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="card">
+    <div class="empty">
+      <strong>No analysis has been stored</strong>
+      Use Refresh analysis to calculate the deterministic snapshot for this business.
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

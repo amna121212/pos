@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Cashier shifts &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Cashier shifts</h1>
+    <div class="sub">{{ rows|length }} shifts &middot; drawer counts and variance</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('admin.staff') }}">Staff</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="body flush">
+    {% if rows %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Shift</th><th>Cashier</th><th>Branch</th><th>Register</th>
+              <th>Opened</th><th>Closed</th>
+              <th class="num">Float</th><th class="num">Counted</th><th class="num">Variance</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for shift, user, branch, register, reconciliation in rows %}
+              <tr>
+                <td class="mono">{{ shift.shift_code }}</td>
+                <td>{{ user.display_name }}</td>
+                <td class="muted">{{ branch.code }}</td>
+                <td class="muted">{{ register.label }}</td>
+                <td class="muted nowrap">{{ shift.opened_at|localtime }}</td>
+                <td class="muted nowrap">{{ shift.closed_at|localtime if shift.closed_at else '—' }}</td>
+                <td class="num">{{ shift.opening_float|pkr }}</td>
+                <td class="num">{{ reconciliation.counted_cash|pkr if reconciliation else '—' }}</td>
+                <td class="num">
+                  {% if reconciliation %}
+                    <span class="{{ 'delta-down' if reconciliation.variance < 0 else 'delta-up' }}">
+                      {{ reconciliation.variance|pkr }}
+                    </span>
+                  {% else %}—{% endif %}
+                </td>
+                <td><span class="badge {{ 'ok' if shift.status == 'closed' else 'warn' }}">{{ shift.status|label }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>No shifts recorded</strong>Shifts appear once a register session is opened.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

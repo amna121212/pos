@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}{{ business.name }} &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>{{ business.name }}</h1>
+    <div class="sub">{{ business.business_type|label }} &middot; {{ business.city }} &middot; {{ branches|length }} branches</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('restaurants.index') }}">All restaurants</a>
+    {% if business.id != current_business_id %}
+      <form method="post" action="{{ url_for('restaurants.open') }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <input type="hidden" name="business_id" value="{{ business.id }}">
+        <button class="btn primary" type="submit">Open restaurant</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="cols">
+  <div>
+    <div class="card">
+      <header><h2>Branches</h2></header>
+      <div class="body flush">
+        {% if branches %}
+          <table>
+            <thead><tr><th>Branch</th><th>Area</th><th>Opening hours</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              {% for branch in branches %}
+                <tr>
+                  <td><span class="mono">{{ branch.code }}</span> {{ branch.name }}</td>
+                  <td class="muted">{{ branch.area }}, {{ branch.city }}</td>
+                  <td class="muted nowrap">{{ hours.get(branch.id, '—') }}</td>
+                  <td>
+                    <span class="badge {{ 'ok' if branch.is_active else 'muted' }}">
+                      {{ 'Open' if branch.is_active else 'Closed' }}
+                    </span>
+                  </td>
+                  <td class="actions">
+                    <form method="post" action="{{ url_for('restaurants.open') }}">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <input type="hidden" name="business_id" value="{{ business.id }}">
+                      <input type="hidden" name="branch_id" value="{{ branch.id }}">
+                      <button class="btn small" type="submit">Open</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="empty"><strong>No branches</strong>This restaurant has no branch yet.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <header><h2>Staff</h2><span class="hint">{{ staff|length }} accounts</span></header>
+      <div class="body flush">
+        {% if staff %}
+          <table>
+            <thead><tr><th>Name</th><th>Role</th><th>Branch</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for membership, user, branch in staff %}
+                <tr class="{{ '' if user.is_active else 'is-muted' }}">
+                  <td>{{ user.display_name }}</td>
+                  <td class="muted">{{ membership.role|label }}</td>
+                  <td class="muted">{{ branch.name if branch else 'All branches' }}</td>
+                  <td><span class="badge {{ 'ok' if user.is_active else 'muted' }}">{{ 'Active' if user.is_active else 'Disabled' }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="empty"><strong>No staff</strong></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <header><h2>Business</h2></header>
+      <div class="body">
+        <dl class="kv">
+          <dt>Name</dt><dd>{{ business.name }}</dd>
+          <dt>Slug</dt><dd class="mono">{{ business.slug }}</dd>
+          <dt>Type</dt><dd>{{ business.business_type|label }}</dd>
+          <dt>City</dt><dd>{{ business.city }}</dd>
+          <dt>Created</dt><dd>{{ business.created_at|localdate }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    {% if settings %}
+      <div class="card">
+        <header><h2>Receipt</h2></header>
+        <div class="body">
+          <dl class="kv">
+            <dt>Header</dt><dd>{{ settings.receipt_header }}</dd>
+            <dt>Footer</dt><dd>{{ settings.receipt_footer }}</dd>
+            <dt>Currency</dt><dd>{{ settings.currency_code }}</dd>
+            <dt>Timezone</dt><dd>{{ settings.timezone_name }}</dd>
+            <dt>Trading since</dt><dd>{{ settings.trading_since }}</dd>
+          </dl>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

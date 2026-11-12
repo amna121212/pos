@@ -1,0 +1,51 @@
+{% if quote.lines %}
+  <div class="cart-lines">
+    {% for line in quote.lines %}
+      {% set key = line|cartkey %}
+      <div class="cart-line">
+        <div class="nm">{{ line.name }}</div>
+        <div class="num">{{ line.line_total|pkr }}</div>
+        {% if line.option_label %}<div class="opts">{{ line.option_label }}</div>{% endif %}
+        {% if line.note %}<div class="opts">{{ line.note }}</div>{% endif %}
+        <div class="qty-controls">
+          <form method="post" action="{{ url_for('pos.set_quantity') }}" data-cart-form="1">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <input type="hidden" name="key" value="{{ key }}">
+            <button class="qty-btn" type="submit" name="qty" value="{{ line.quantity - 1 }}" aria-label="One fewer">&minus;</button>
+          </form>
+          <form method="post" action="{{ url_for('pos.set_quantity') }}" data-cart-form="1">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <input type="hidden" name="key" value="{{ key }}">
+            <input type="number" name="qty" value="{{ line.quantity }}" min="0" max="999" aria-label="Quantity" data-auto-submit="1">
+          </form>
+          <form method="post" action="{{ url_for('pos.set_quantity') }}" data-cart-form="1">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <input type="hidden" name="key" value="{{ key }}">
+            <button class="qty-btn" type="submit" name="qty" value="{{ line.quantity + 1 }}" aria-label="One more">+</button>
+          </form>
+          <form method="post" action="{{ url_for('pos.remove') }}" data-cart-form="1">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <input type="hidden" name="key" value="{{ key }}">
+            <button class="btn ghost small" type="submit" title="Remove">Remove</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="totals">
+    <div><span>Subtotal</span><span class="num">{{ quote.subtotal|pkr }}</span></div>
+    {% if quote.discount > 0 %}
+      <div><span>Discount</span><span class="num">&minus;{{ quote.discount|pkr }}</span></div>
+    {% endif %}
+    <div>
+      <span>Tax{% if quote.tax_rate %} ({{ quote.tax_rate }}%){% endif %}</span>
+      <span class="num">{{ quote.tax|pkr }}</span>
+    </div>
+    <div class="grand"><span>Total</span><span class="num">{{ quote.grand|pkr }}</span></div>
+  </div>
+{% else %}
+  <div class="empty">
+    <strong>Basket is empty</strong>
+    Choose a product to start a bill.
+  </div>
+{% endif %}

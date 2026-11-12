@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Stock movements &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>Stock movements</h1>
+    <div class="sub">Latest 100 movements at {{ ctx.branch.name }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('inventory.index') }}">Stock on hand</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="body flush">
+    {% if rows %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>When</th><th>Item</th><th>Type</th><th class="num">Change</th><th>Reference</th></tr>
+          </thead>
+          <tbody>
+            {% for movement, item in rows %}
+              <tr>
+                <td class="nowrap muted">{{ movement.created_at|localtime }}</td>
+                <td>{{ item.name }}</td>
+                <td class="muted">{{ movement.movement_type|label }}</td>
+                <td class="num">
+                  {% if movement.delta_qty > 0 %}+{% endif %}{{ movement.delta_qty|qty }} {{ item.unit }}
+                </td>
+                <td class="mono muted">{{ movement.reference_code }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>No movements</strong>Nothing has moved at this branch yet.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

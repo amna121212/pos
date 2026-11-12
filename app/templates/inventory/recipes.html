@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Recipes &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Recipes</h1>
+    <div class="sub">{{ rows|length }} {{ 'recipe' if rows|length == 1 else 'recipes' }} &middot; what a paid sale consumes</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('inventory.ingredients') }}">Ingredients</a>
+    <a class="btn" href="{{ url_for('inventory.index') }}">Branch stock</a>
+  </div>
+</div>
+
+<div class="card">
+  <header>
+    <h2>Product recipes</h2>
+    <span class="hint">A recipe deducts ingredients when the order is paid</span>
+  </header>
+  <div class="body flush">
+    {% if rows %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Product</th><th>SKU</th><th class="num">Yield</th><th class="num">Ingredient lines</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for recipe, name, sku, line_count in rows %}
+              <tr>
+                <td>{{ name }}</td>
+                <td class="mono muted">{{ sku }}</td>
+                <td class="num">{{ recipe.yield_qty|qty }}</td>
+                <td class="num">{{ line_count }}</td>
+                <td><span class="badge {{ 'ok' if recipe.is_active else 'muted' }}">{{ 'Active' if recipe.is_active else 'Retired' }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty">
+        <strong>No recipes</strong>
+        Retail items deduct their linked unit instead of ingredients.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

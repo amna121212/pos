@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Settings &middot; Amna POS{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Settings</h1>
+    <div class="sub">{{ business.name }}</div>
+  </div>
+</div>
+
+<div class="cols even">
+  <div class="card">
+    <header><h2>Business</h2></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Name</dt><dd>{{ business.name }}</dd>
+        <dt>Type</dt><dd>{{ business.business_type|label }}</dd>
+        <dt>City</dt><dd>{{ business.city }}</dd>
+        <dt>Currency</dt><dd>{{ settings.currency_code if settings else 'PKR' }}</dd>
+        <dt>Timezone</dt><dd>{{ settings.timezone_name if settings else 'Asia/Karachi' }}</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card">
+    <header><h2>Receipt and stock rules</h2></header>
+    <div class="body">
+      {% if settings is none %}
+        <div class="empty"><strong>No settings row</strong>This business has no business_settings record.</div>
+      {% else %}
+        <form method="post" action="{{ url_for('admin.settings') }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <div class="form-row">
+            <label for="receipt_header">Receipt header</label>
+            <input type="text" id="receipt_header" name="receipt_header" value="{{ settings.receipt_header }}"
+                   maxlength="160" {{ '' if can_edit else 'readonly' }} required>
+          </div>
+          <div class="form-row">
+            <label for="receipt_footer">Receipt footer</label>
+            <input type="text" id="receipt_footer" name="receipt_footer" value="{{ settings.receipt_footer }}"
+                   maxlength="240" {{ '' if can_edit else 'readonly' }} required>
+          </div>
+          <div class="form-row">
+            <label for="min_gross_margin_pct">Minimum gross margin (%)</label>
+            <input type="number" step="0.01" min="0" max="99" id="min_gross_margin_pct" name="min_gross_margin_pct"
+                   value="{{ settings.min_gross_margin_pct }}" {{ '' if can_edit else 'readonly' }}>
+          </div>
+          <div class="form-row">
+            <label class="check">
+              <input type="checkbox" name="allow_negative_stock" value="1"
+                     {{ 'checked' if settings.allow_negative_stock }} {{ '' if can_edit else 'disabled' }}>
+              <span>Allow stock to go below zero</span>
+            </label>
+            <div class="field-help">Off means a sale is refused when ingredients run out.</div>
+          </div>
+          {% if can_edit %}
+            <button class="btn primary" type="submit">Save settings</button>
+          {% else %}
+            <p class="faint mb0">Only the business owner can change these settings.</p>
+          {% endif %}
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
