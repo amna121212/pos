@@ -6,6 +6,9 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{% block title %}Amna POS{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
 </head>
 <body>
 {% from "_icons.html" import icon %}
@@ -68,6 +71,9 @@
         {% endif %}
         {% if has_permission('staff.manage') or has_permission('business.settings') %}
           <a href="{{ url_for('admin.audit') }}" class="{{ 'active' if ep == 'admin.audit' }}">{{ icon('shield') }}<span>Audit log</span></a>
+        {% endif %}
+        {% if has_permission('business.settings') %}
+          <a href="{{ url_for('admin.payment_methods') }}" class="{{ 'active' if ep == 'admin.payment_methods' }}">{{ icon('cart') }}<span>Payment methods</span></a>
         {% endif %}
         {% if has_permission('business.settings') or has_permission('branch.manage') %}
           <a href="{{ url_for('admin.settings') }}" class="{{ 'active' if ep == 'admin.settings' }}">{{ icon('gear') }}<span>Settings</span></a>

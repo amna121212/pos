@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit ingredient' if item else 'Add ingredient' }} &middot; Amna POS{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ 'Edit ingredient' if item else 'Add ingredient' }}</h1>
+    <div class="sub">{% if item %}{{ item.sku }}{% else %}Stock items that recipes consume.{% endif %}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('inventory.ingredients') }}">Back to ingredients</a>
+  </div>
+</div>
+
+<form method="post" class="card" style="max-width:700px"
+      action="{{ url_for('inventory.ingredient_edit', item_id=item.id) if item else url_for('inventory.ingredient_new') }}">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <div class="body">
+    <div class="form-grid">
+      <div class="form-row">
+        <label for="sku">SKU <span class="req">*</span></label>
+        <input type="text" id="sku" name="sku" value="{{ values.sku }}" maxlength="48"
+               {{ 'readonly' if item }} required>
+        {% if item %}<div class="field-help">The SKU cannot be changed after creation.</div>{% endif %}
+      </div>
+      <div class="form-row">
+        <label for="name">Name <span class="req">*</span></label>
+        <input type="text" id="name" name="name" value="{{ values.name }}" maxlength="130" required>
+      </div>
+      <div class="form-row">
+        <label for="unit">Unit <span class="req">*</span></label>
+        <select id="unit" name="unit" required>
+          {% for unit in units %}
+            <option value="{{ unit }}" {{ 'selected' if values.unit == unit }}>{{ unit }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="reorder_level">Reorder level</label>
+        <input type="number" step="0.001" min="0" id="reorder_level" name="reorder_level" value="{{ values.reorder_level }}">
+      </div>
+      <div class="form-row">
+        <label for="standard_cost">Standard cost (PKR)</label>
+        <input type="number" step="0.01" min="0" id="standard_cost" name="standard_cost" value="{{ values.standard_cost }}">
+      </div>
+      <div class="form-row">
+        <label for="product_id">Linked product</label>
+        <select id="product_id" name="product_id">
+          <option value="">Not linked</option>
+          {% for product in products %}
+            <option value="{{ product.id }}" {{ 'selected' if values.product_id == product.id|string }}>{{ product.sku }} &middot; {{ product.name }}</option>
+          {% endfor %}
+        </select>
+        <div class="field-help">A retail item is deducted as one unit per sale.</div>
+      </div>
+    </div>
+  </div>
+  <div class="body" style="border-top:1px solid var(--line);display:flex;gap:8px">
+    <button class="btn primary" type="submit">{{ 'Save ingredient' if item else 'Add ingredient' }}</button>
+    <a class="btn" href="{{ url_for('inventory.ingredients') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

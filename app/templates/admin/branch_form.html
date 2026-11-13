@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Add branch &middot; Amna POS{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>Add branch</h1>
+    <div class="sub">{{ ctx.business.name }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('admin.branches') }}">Back to branches</a>
+  </div>
+</div>
+
+<form method="post" class="card" style="max-width:640px" action="{{ url_for('admin.branch_new') }}">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <div class="body">
+    <div class="form-grid">
+      <div class="form-row">
+        <label for="code">Branch code <span class="req">*</span></label>
+        <input type="text" id="code" name="code" value="{{ values.code }}" maxlength="20" required autofocus>
+        <div class="field-help">Short label used on orders and receipts, e.g. DHA.</div>
+      </div>
+      <div class="form-row">
+        <label for="name">Branch name <span class="req">*</span></label>
+        <input type="text" id="name" name="name" value="{{ values.name }}" maxlength="120" required>
+      </div>
+      <div class="form-row">
+        <label for="area">Area <span class="req">*</span></label>
+        <input type="text" id="area" name="area" value="{{ values.area }}" maxlength="100" required>
+      </div>
+      <div class="form-row">
+        <label for="city">City <span class="req">*</span></label>
+        <input type="text" id="city" name="city" value="{{ values.city }}" maxlength="80" required>
+      </div>
+    </div>
+  </div>
+  <div class="body" style="border-top:1px solid var(--line);display:flex;gap:8px">
+    <button class="btn primary" type="submit">Add branch</button>
+    <a class="btn" href="{{ url_for('admin.branches') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -11,6 +11,9 @@
   <div class="page-actions">
     <a class="btn" href="{{ url_for('inventory.ingredients') }}">Ingredients</a>
     <a class="btn" href="{{ url_for('inventory.index') }}">Branch stock</a>
+    {% if has_permission('inventory.adjust') %}
+      <a class="btn primary" href="{{ url_for('inventory.recipe_new') }}">Add recipe</a>
+    {% endif %}
   </div>
 </div>
 
@@ -24,7 +27,8 @@
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Product</th><th>SKU</th><th class="num">Yield</th><th class="num">Ingredient lines</th><th>Status</th></tr>
+            <tr><th>Product</th><th>SKU</th><th class="num">Yield</th><th class="num">Ingredient lines</th><th>Status</th>
+              {% if has_permission('inventory.adjust') %}<th></th>{% endif %}</tr>
           </thead>
           <tbody>
             {% for recipe, name, sku, line_count in rows %}
@@ -34,6 +38,16 @@
                 <td class="num">{{ recipe.yield_qty|qty }}</td>
                 <td class="num">{{ line_count }}</td>
                 <td><span class="badge {{ 'ok' if recipe.is_active else 'muted' }}">{{ 'Active' if recipe.is_active else 'Retired' }}</span></td>
+                {% if has_permission('inventory.adjust') %}
+                  <td class="actions">
+                    <a class="btn ghost small" href="{{ url_for('inventory.recipe_edit', recipe_id=recipe.id) }}">Edit</a>
+                    <form method="post" action="{{ url_for('inventory.recipe_delete', recipe_id=recipe.id) }}"
+                          class="inline-form" onsubmit="return confirm('Delete this recipe?');">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <button class="btn ghost small danger" type="submit">Delete</button>
+                    </form>
+                  </td>
+                {% endif %}
               </tr>
             {% endfor %}
           </tbody>

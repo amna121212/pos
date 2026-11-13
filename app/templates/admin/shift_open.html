@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Open shift &middot; Amna POS{% endblock %}
+
+{% block content %}
+{% set ctx = current_context() %}
+<div class="page-head">
+  <div>
+    <h1>Open shift</h1>
+    <div class="sub">{{ ctx.branch.code }} &middot; {{ ctx.branch.name }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('admin.shifts') }}">Back to shifts</a>
+  </div>
+</div>
+
+{% if not registers %}
+  <div class="card"><div class="empty">
+    <strong>No cash register at this branch</strong>
+    A shift needs a register to draw against.
+  </div></div>
+{% else %}
+<form method="post" class="card" style="max-width:640px" action="{{ url_for('admin.shift_open') }}">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <div class="body">
+    <div class="form-row">
+      <label for="register_id">Register <span class="req">*</span></label>
+      <select id="register_id" name="register_id" required>
+        {% for register in registers %}
+          <option value="{{ register.id }}">{{ register.code }} &middot; {{ register.label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="user_id">Cashier <span class="req">*</span></label>
+      <select id="user_id" name="user_id" required>
+        {% for membership, user in staff %}
+          <option value="{{ user.id }}" {{ 'selected' if user.id == me }}>{{ user.display_name }} &middot; {{ membership.role|label }}</option>
+        {% endfor %}
+      </select>
+      <div class="field-help">Each cashier can hold one open shift per branch.</div>
+    </div>
+    <div class="form-row">
+      <label for="opening_float">Opening float (PKR) <span class="req">*</span></label>
+      <input type="number" step="0.01" min="0" id="opening_float" name="opening_float" value="0" required>
+      <div class="field-help">Cash already in the drawer when the shift starts.</div>
+    </div>
+  </div>
+  <div class="body" style="border-top:1px solid var(--line);display:flex;gap:8px">
+    <button class="btn primary" type="submit">Open shift</button>
+    <a class="btn" href="{{ url_for('admin.shifts') }}">Cancel</a>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

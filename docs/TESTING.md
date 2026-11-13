@@ -5,7 +5,7 @@ cd /opt/student-projects/pos
 .venv/bin/python -m pytest -q
 ```
 
-85 tests, all passing. The suite reads the live `retail_pos_db`; it does not create
+88 tests, all passing. The suite reads the live `retail_pos_db`; it does not create
 tenants, users or orders, and it never writes a business record. Session cookies are
 signed directly, so no account password is stored in the test code.
 

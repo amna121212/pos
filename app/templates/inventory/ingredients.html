@@ -12,6 +12,9 @@
   <div class="page-actions">
     <a class="btn" href="{{ url_for('inventory.recipes') }}">Recipes</a>
     <a class="btn" href="{{ url_for('inventory.index') }}">Branch stock</a>
+    {% if has_permission('inventory.adjust') %}
+      <a class="btn primary" href="{{ url_for('inventory.ingredient_new') }}">Add ingredient</a>
+    {% endif %}
   </div>
 </div>
 
@@ -34,6 +37,7 @@
               <th>SKU</th><th>Ingredient</th><th>Unit</th>
               <th class="num">On hand</th><th class="num">Reorder at</th>
               <th class="num">Standard cost</th><th class="num">Used in recipes</th>
+              {% if has_permission('inventory.adjust') %}<th></th>{% endif %}
             </tr>
           </thead>
           <tbody>
@@ -49,6 +53,16 @@
                 <td class="num muted">{{ item.reorder_level|qty }}</td>
                 <td class="num">{{ item.standard_cost|pkr }}</td>
                 <td class="num">{{ used_in.get(item.id, 0) or '—' }}</td>
+                {% if has_permission('inventory.adjust') %}
+                  <td class="actions">
+                    <a class="btn ghost small" href="{{ url_for('inventory.ingredient_edit', item_id=item.id) }}">Edit</a>
+                    <form method="post" action="{{ url_for('inventory.ingredient_delete', item_id=item.id) }}"
+                          class="inline-form" onsubmit="return confirm('Delete {{ item.name }}?');">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <button class="btn ghost small danger" type="submit">Delete</button>
+                    </form>
+                  </td>
+                {% endif %}
               </tr>
             {% endfor %}
           </tbody>

@@ -255,10 +255,18 @@ MANAGER_PAGES = [
     "/insights",
     "/restaurants",
     "/staff",
+    "/staff/new",
     "/shifts",
+    "/shifts/open",
     "/audit",
     "/settings",
+    "/inventory/ingredients/new",
+    "/inventory/recipes/new",
 ]
+
+# Payment methods change what the business charges through, so they stay with
+# business.settings: the owner configures them, a branch manager cannot.
+OWNER_PAGES = ["/payment-methods"]
 
 
 def test_every_manager_page_loads(client, app):
@@ -269,6 +277,70 @@ def test_every_manager_page_loads(client, app):
         if status != 200:
             broken.append((path, status))
     assert broken == [], broken
+
+
+def test_payment_methods_page_is_owner_only(client, app):
+    """Configured money channels are a business-settings action."""
+    sign_in(client, app, "owner")
+    assert client.get("/payment-methods").status_code == 200
+    sign_in(client, app, JT_MANAGER)
+    assert client.get("/payment-methods").status_code == 403
+
+
+def test_new_record_forms_reject_bad_input_without_writing(client, app):
+    """Invalid submissions must bounce back with a message, not create a row."""
+    sign_in(client, app, "owner")
+    before = db.session.execute(
+        text("SELECT COUNT(*) FROM branches WHERE business_id = :b"), {"b": support.BUSINESS_ID}
+    ).scalar()
+
+    response = client.post(
+        "/branches/new",
+        data={
+            "_csrf": _token(client),
+            "code": "!",
+            "name": "Nowhere",
+            "area": "Nowhere",
+            "city": "Lahore",
+        },
+        follow_redirects=True,
+    )
+    body = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert "Branch code must be" in body
+    after = db.session.execute(
+        text("SELECT COUNT(*) FROM branches WHERE business_id = :b"), {"b": support.BUSINESS_ID}
+    ).scalar()
+    assert after == before, "a rejected branch must not be created"
+
+
+def test_payment_method_cannot_be_deleted_while_it_has_payments(client, app):
+    """A method with money recorded against it must be disabled, not removed."""
+    sign_in(client, app, "owner")
+    with app.app_context():
+        used = db.session.execute(
+            text(
+                """
+                SELECT pm.id, pm.label FROM payment_methods pm
+                JOIN order_payments op ON op.payment_method_id = pm.id
+                WHERE pm.business_id = :b
+                GROUP BY pm.id, pm.label LIMIT 1
+                """
+            ),
+            {"b": support.BUSINESS_ID},
+        ).first()
+        before = db.session.execute(text("SELECT COUNT(*) FROM payment_methods")).scalar()
+    if used is None:
+        pytest.skip("no payment method has payments in this database")
+    response = client.post(
+        f"/payment-methods/{used[0]}/delete",
+        data={"_csrf": _token(client)},
+        follow_redirects=True,
+    )
+    assert "Disable it instead of deleting" in response.get_data(as_text=True)
+    with app.app_context():
+        after = db.session.execute(text("SELECT COUNT(*) FROM payment_methods")).scalar()
+    assert after == before, "a used payment method must survive the delete attempt"
 
 
 def test_restaurants_page_lists_the_visible_business(client, app):

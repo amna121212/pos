@@ -7,7 +7,7 @@ from sqlalchemy import select
 from app import db
 from app import cart as basket
 from app.models import BranchProduct, Category, DiningTable, PaymentMethod, Product
-from app.operations_models import ProductBarcode
+from app.operations_models import CashierShift, ProductBarcode
 from app.security import branch_required, can, context
 from app.services.errors import PaymentError, StockPolicyError, TenantAccessError
 from app.services.pos_orders import ORDER_TYPES, create_order, quote
@@ -334,6 +334,18 @@ def checkout():
         if (amount_paid or 0) > 0 and not payment_method_id:
             raise PaymentError("Choose a payment method.")
 
+        # Tie the sale to the cashier's open drawer, so closing that shift can
+        # reconcile exactly the cash this till took.
+        open_shift = db.session.scalar(
+            select(CashierShift)
+            .where(
+                CashierShift.user_id == ctx.user.id,
+                CashierShift.branch_id == ctx.branch_id,
+                CashierShift.status == "open",
+            )
+            .order_by(CashierShift.id.desc())
+        )
+
         order = create_order(
             business_id=ctx.business_id,
             branch=ctx.branch,
@@ -345,6 +357,7 @@ def checkout():
             payment_method_id=payment_method_id,
             amount_paid=amount_paid,
             note=request.form.get("note") or "",
+            cashier_shift_id=open_shift.id if open_shift else None,
             actor_user_id=ctx.user.id,
         )
     except (PaymentError, StockPolicyError, TenantAccessError) as error:

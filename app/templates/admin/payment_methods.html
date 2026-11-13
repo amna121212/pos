@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Payment methods &middot; Amna POS{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Payment methods</h1>
+    <div class="sub">{{ rows|length }} {{ 'method' if rows|length == 1 else 'methods' }} offered at the till</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('admin.settings') }}">Settings</a>
+  </div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <header><h2>Methods</h2></header>
+    <div class="body flush">
+      {% if rows %}
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Label</th><th>Code</th><th class="num">Payments</th><th class="num">Taken</th><th></th></tr>
+            </thead>
+            <tbody>
+              {% for method, payments, amount in rows %}
+                <tr class="{{ '' if method.enabled else 'is-muted' }}">
+                  <td>
+                    <form method="post" action="{{ url_for('admin.payment_method_edit', method_id=method.id) }}"
+                          style="display:flex;gap:6px;align-items:center">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <input type="text" name="label" value="{{ method.label }}" maxlength="70" style="width:150px">
+                      <label class="check" style="white-space:nowrap">
+                        <input type="checkbox" name="enabled" value="1" {{ 'checked' if method.enabled }}>
+                        <span class="faint" style="font-size:11px">on</span>
+                      </label>
+                      <button class="btn small" type="submit">Save</button>
+                    </form>
+                  </td>
+                  <td class="mono muted">{{ method.code }}</td>
+                  <td class="num">{{ payments }}</td>
+                  <td class="num">{{ amount|pkr }}</td>
+                  <td class="actions">
+                    <form method="post" action="{{ url_for('admin.payment_method_delete', method_id=method.id) }}"
+                          class="inline-form" onsubmit="return confirm('Delete {{ method.label }}?');">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <button class="btn small danger" type="submit" {{ 'disabled' if payments }}>Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty"><strong>No payment methods</strong>Add one so the till can take money.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <form method="post" class="card" action="{{ url_for('admin.payment_method_new') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <header><h2>Add method</h2></header>
+    <div class="body">
+      <div class="form-row">
+        <label for="label">Label <span class="req">*</span></label>
+        <input type="text" id="label" name="label" maxlength="70" placeholder="Easypaisa" required>
+      </div>
+      <div class="form-row">
+        <label for="code">Code <span class="req">*</span></label>
+        <input type="text" id="code" name="code" maxlength="30" placeholder="easypaisa" required>
+        <div class="field-help">Lower case letters, digits, dash or underscore.</div>
+      </div>
+      <button class="btn primary" type="submit">Add method</button>
+      <p class="faint mb0" style="margin-top:10px;font-size:11.5px">
+        A method that already has payments cannot be deleted; switch it off instead.
+      </p>
+    </div>
+  </form>
+</div>
+{% endblock %}

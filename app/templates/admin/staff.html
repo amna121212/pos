@@ -10,8 +10,12 @@
     <div class="sub">{{ rows|length }} {{ 'account' if rows|length == 1 else 'accounts' }} at {{ ctx.business.name }}</div>
   </div>
   <div class="page-actions">
+    <a class="btn" href="{{ url_for('admin.shifts') }}">Shifts</a>
     {% if can('branch.manage') %}
       <a class="btn" href="{{ url_for('admin.branches') }}">Branches</a>
+    {% endif %}
+    {% if can_manage %}
+      <a class="btn primary" href="{{ url_for('admin.staff_new') }}">Add employee</a>
     {% endif %}
   </div>
 </div>
@@ -59,10 +63,16 @@
               </td>
               {% if can_manage %}
                 <td class="actions">
+                  <a class="btn ghost small" href="{{ url_for('admin.staff_edit', membership_id=membership.id) }}">Edit</a>
                   {% if user.id != me %}
                     <form method="post" action="{{ url_for('admin.staff_active', membership_id=membership.id) }}" class="inline-form">
                       <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-                      <button class="btn small" type="submit">{{ 'Disable' if user.is_active else 'Enable' }}</button>
+                      <button class="btn ghost small" type="submit">{{ 'Disable' if user.is_active else 'Enable' }}</button>
+                    </form>
+                    <form method="post" action="{{ url_for('admin.staff_delete', membership_id=membership.id) }}"
+                          class="inline-form" onsubmit="return confirm('Delete {{ user.display_name }}?');">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <button class="btn ghost small danger" type="submit">Delete</button>
                     </form>
                   {% endif %}
                 </td>

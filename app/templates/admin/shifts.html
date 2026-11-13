@@ -9,7 +9,10 @@
     <div class="sub">{{ rows|length }} shifts &middot; drawer counts and variance</div>
   </div>
   <div class="page-actions">
-    <a class="btn" href="{{ url_for('admin.staff') }}">Staff</a>
+    <a class="btn" href="{{ url_for('admin.staff') }}">Employees</a>
+    {% if can_manage %}
+      <a class="btn primary" href="{{ url_for('admin.shift_open') }}">Open shift</a>
+    {% endif %}
   </div>
 </div>
 
@@ -22,8 +25,8 @@
             <tr>
               <th>Shift</th><th>Cashier</th><th>Branch</th><th>Register</th>
               <th>Opened</th><th>Closed</th>
-              <th class="num">Float</th><th class="num">Counted</th><th class="num">Variance</th>
-              <th>Status</th>
+              <th class="num">Float</th><th class="num">Expected</th><th class="num">Counted</th>
+              <th class="num">Variance</th><th>Status</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -36,6 +39,11 @@
                 <td class="muted nowrap">{{ shift.opened_at|localtime }}</td>
                 <td class="muted nowrap">{{ shift.closed_at|localtime if shift.closed_at else '—' }}</td>
                 <td class="num">{{ shift.opening_float|pkr }}</td>
+                <td class="num">
+                  {% if reconciliation %}{{ reconciliation.expected_cash|pkr }}
+                  {% elif expected.get(shift.id) is not none %}{{ expected.get(shift.id)|pkr }}
+                  {% else %}—{% endif %}
+                </td>
                 <td class="num">{{ reconciliation.counted_cash|pkr if reconciliation else '—' }}</td>
                 <td class="num">
                   {% if reconciliation %}
@@ -45,14 +53,35 @@
                   {% else %}—{% endif %}
                 </td>
                 <td><span class="badge {{ 'ok' if shift.status == 'closed' else 'warn' }}">{{ shift.status|label }}</span></td>
+                <td class="actions">
+                  {% if shift.status == 'open' and can_manage %}
+                    <form method="post" action="{{ url_for('admin.shift_close', shift_id=shift.id) }}"
+                          style="display:flex;gap:5px;justify-content:flex-end">
+                      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                      <input type="number" step="0.01" min="0" name="counted_cash" placeholder="Counted"
+                             style="width:110px" required>
+                      <button class="btn small" type="submit">Close</button>
+                    </form>
+                  {% endif %}
+                </td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     {% else %}
-      <div class="empty"><strong>No shifts recorded</strong>Shifts appear once a register session is opened.</div>
+      <div class="empty">
+        <strong>No shifts recorded</strong>
+        {% if can_manage %}Open a shift to start drawing from a register.{% endif %}
+      </div>
     {% endif %}
   </div>
 </div>
+
+{% if not registers and can_manage %}
+  <div class="note">
+    <b>No cash register at this branch.</b>
+    A shift needs a register before it can be opened.
+  </div>
+{% endif %}
 {% endblock %}

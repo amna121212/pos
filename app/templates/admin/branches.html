@@ -9,7 +9,10 @@
     <div class="sub">{{ rows|length }} {{ 'branch' if rows|length == 1 else 'branches' }} at {{ ctx.business.name }}</div>
   </div>
   <div class="page-actions">
-    <a class="btn" href="{{ url_for('admin.staff') }}">Staff</a>
+    <a class="btn" href="{{ url_for('admin.staff') }}">Employees</a>
+    {% if can_manage %}
+      <a class="btn primary" href="{{ url_for('admin.branch_new') }}">Add branch</a>
+    {% endif %}
   </div>
 </div>
 

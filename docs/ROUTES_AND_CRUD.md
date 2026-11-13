@@ -46,6 +46,19 @@ branch prices and transfers.
 | GET, POST | `/login` | `auth.login` | public |
 | GET, POST | `/signup` | `auth.signup` | public while `POS_SIGNUP_ENABLED=1`, else 404 |
 | POST | `/logout` | `auth.logout` | signed in |
+| GET/POST | `/branches/new` | `admin.branch_new` | add a branch to the business |
+| GET/POST | `/staff/new` | `admin.staff_new` | create an employee account with a role and branch |
+| GET/POST | `/staff/<id>/edit` | `admin.staff_edit` | name, role, branch, optional password reset |
+| POST | `/staff/<id>/delete` | `admin.staff_delete` | refused once the account has shifts or audit entries |
+| GET | `/payment-methods` | `admin.payment_methods` | methods with payment counts and totals |
+| POST | `/payment-methods/new` \| `/<id>/edit` \| `/<id>/delete` | `admin.payment_method_*` | delete refused while payments exist |
+| GET/POST | `/shifts/open` | `admin.shift_open` | open a drawer against a register with an opening float |
+| POST | `/shifts/<id>/close` | `admin.shift_close` | counted cash, expected cash, variance |
+| GET/POST | `/inventory/ingredients/new` \| `/<id>/edit` | `inventory.ingredient_*` | stock item CRUD |
+| POST | `/inventory/ingredients/<id>/delete` | `inventory.ingredient_delete` | refused while movements, recipes or receipts reference it |
+| GET/POST | `/inventory/recipes/new` \| `/<id>/edit` | `inventory.recipe_*` | recipe and its ingredient lines |
+| POST | `/inventory/recipes/<id>/delete` | `inventory.recipe_delete` | removes the lines with it |
+| POST | `/pos/quote` | `pos.requote` | re-price the basket after a discount change |
 | POST | `/context` | `auth.switch_context` | applies restaurant and branch together; 403 outside scope; JSON for fetch |
 | POST | `/branch/<id>` | `auth.switch_branch` | branch in scope, else 403; returns JSON when called with `X-Requested-With: fetch` |
 | POST | `/business/<id>` | `auth.switch_business` | business in scope; super admin: any; JSON for fetch |

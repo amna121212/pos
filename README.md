@@ -39,7 +39,8 @@ Implemented and exercised end to end:
   payment methods, cancelled and refunded work, cashier performance, stock
   consumption, low stock, purchases, discounts, operational summary and data
   provenance. Filters live in the URL and update in place without reloading.
-- **Administration** — employees and roles, cashier shifts with drawer variance, an
+- **Administration** — employees and roles (add, edit, remove), payment methods,
+  cashier shifts with an opening float, counted cash and drawer variance, an
   audit log, branches and operating hours, receipt and stock settings, and a platform
   console with a data-integrity check.
 - **Insights** — stored deterministic snapshots and rule-written recommendations per
@@ -105,7 +106,7 @@ Head is `148a58c8d274`. The web layer adds no table, so no new revision is requi
 .venv/bin/python -m pytest -q
 ```
 
-83 tests. They read the live database, sign a session cookie directly, and never
+88 tests. They read the live database, sign a session cookie directly, and never
 store an account password in the suite. Registration and the switch routes are
 exercised through their guards only, so the suite creates no tenant and no user.
 `docs/TESTING.md` lists what each test proves.
