@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% from "_tabs.html" import tabs %}
 {% block title %}Menu{% endblock %}
 {% block section %}Catalogue{% endblock %}
 {% block heading %}Menu{% endblock %}
@@ -14,13 +13,6 @@
   {% if can_manage %}
     <a class="btn pri" href="{{ url_for('catalog.product_new') }}">New item</a>
   {% endif %}
-{% endblock %}
-
-{% block tabs %}
-  {{ tabs([
-    ('Items', url_for('catalog.products'), true),
-    ('Categories', url_for('catalog.categories'), false),
-  ]) }}
 {% endblock %}
 
 {% block content %}

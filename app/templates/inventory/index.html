@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% from "_tabs.html" import tabs %}
 {% block title %}Inventory{% endblock %}
 {% block section %}Stock{% endblock %}
 {% block heading %}Stock{% endblock %}
@@ -13,17 +12,6 @@
   {% if has_permission('inventory.adjust') %}
     <a class="btn pri" href="{{ url_for('inventory.adjust') }}">Adjust stock</a>
   {% endif %}
-{% endblock %}
-
-{% block tabs %}
-  {{ tabs([
-    ('Stock', url_for('inventory.index'), true),
-    ('Ingredients', url_for('inventory.ingredients'), false),
-    ('Recipes', url_for('inventory.recipes'), false),
-    ('Movements', url_for('inventory.movements'), false),
-    ('Adjust', url_for('inventory.adjust'), false),
-    ('Transfers', url_for('inventory.transfers'), false),
-  ]) }}
 {% endblock %}
 
 {% block content %}

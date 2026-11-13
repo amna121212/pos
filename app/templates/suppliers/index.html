@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% from "_tabs.html" import tabs %}
 {% block title %}Suppliers{% endblock %}
 {% block section %}Stock / Purchasing{% endblock %}
 {% block heading %}Suppliers{% endblock %}
@@ -9,13 +8,6 @@
   {% if has_permission('inventory.purchase') %}
     <a class="btn pri" href="{{ url_for('suppliers.new') }}">New supplier</a>
   {% endif %}
-{% endblock %}
-
-{% block tabs %}
-  {{ tabs([
-    ('Purchase orders', url_for('inventory.purchases'), false),
-    ('Suppliers', url_for('suppliers.index'), true),
-  ]) }}
 {% endblock %}
 
 {% block content %}

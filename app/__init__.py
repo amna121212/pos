@@ -149,6 +149,7 @@ def create_app():
 
 def _register_template_helpers(app):
     from app.filters import register_filters
+    from app.navigation import workspace_tabs
     from app.security import branch_options, can, context, has_permission
 
     register_filters(app)
@@ -157,6 +158,7 @@ def _register_template_helpers(app):
     app.jinja_env.globals["can"] = can
     app.jinja_env.globals["has_permission"] = has_permission
     app.jinja_env.globals["branch_options"] = branch_options
+    app.jinja_env.globals["workspace_tabs"] = workspace_tabs
 
 
 def _register_request_hooks(app):

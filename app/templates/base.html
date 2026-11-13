@@ -125,7 +125,16 @@
         <div class="actions">{% block actions %}{% endblock %}</div>
       </div>
 
-      {% block tabs %}{% endblock %}
+      {% block tabs %}
+        {% set ws = workspace_tabs() %}
+        {% if ws %}
+          <nav class="tabs">
+            {% for label, url, active in ws %}
+              <a class="{% if active %}on{% endif %}" href="{{ url }}">{{ label }}</a>
+            {% endfor %}
+          </nav>
+        {% endif %}
+      {% endblock %}
 
       <div class="content {% block content_class %}{% endblock %}">
         {% with messages = get_flashed_messages(with_categories=true) %}
