@@ -5,7 +5,6 @@
 <div class="page-head">
   <div>
     <h1>{{ 'Edit ingredient' if item else 'Add ingredient' }}</h1>
-    <div class="sub">{% if item %}{{ item.sku }}{% else %}Stock items that recipes consume.{% endif %}</div>
   </div>
   <div class="page-actions">
     <a class="btn" href="{{ url_for('inventory.ingredients') }}">Back to ingredients</a>
@@ -21,8 +20,7 @@
         <label for="sku">SKU <span class="req">*</span></label>
         <input type="text" id="sku" name="sku" value="{{ values.sku }}" maxlength="48"
                {{ 'readonly' if item }} required>
-        {% if item %}<div class="field-help">The SKU cannot be changed after creation.</div>{% endif %}
-      </div>
+              </div>
       <div class="form-row">
         <label for="name">Name <span class="req">*</span></label>
         <input type="text" id="name" name="name" value="{{ values.name }}" maxlength="130" required>
@@ -51,7 +49,6 @@
             <option value="{{ product.id }}" {{ 'selected' if values.product_id == product.id|string }}>{{ product.sku }} &middot; {{ product.name }}</option>
           {% endfor %}
         </select>
-        <div class="field-help">A retail item is deducted as one unit per sale.</div>
       </div>
     </div>
   </div>

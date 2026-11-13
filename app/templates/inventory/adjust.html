@@ -6,7 +6,6 @@
 <div class="page-head">
   <div>
     <h1>Adjust stock</h1>
-    <div class="sub">{{ ctx.branch.name }} &middot; every change writes a movement row</div>
   </div>
   <div class="page-actions">
     <a class="btn" href="{{ url_for('inventory.index') }}">Back to stock</a>
@@ -28,7 +27,6 @@
     <div class="form-row">
       <label for="delta">Quantity change <span class="req">*</span></label>
       <input type="number" step="0.001" id="delta" name="delta" required placeholder="e.g. -2.5 or 12">
-      <div class="field-help">Use a negative number to reduce stock.</div>
     </div>
     <div class="form-row">
       <label for="reason">Reason <span class="req">*</span></label>

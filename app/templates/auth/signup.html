@@ -14,7 +14,6 @@
   <form class="auth-card wide" method="post" action="{{ url_for('auth.signup') }}" novalidate>
     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <h1>Create account</h1>
-    <div class="sub">Sets up a business, its first branch and an owner login.</div>
 
     {% if error %}
       <div class="flashes">
@@ -56,7 +55,6 @@
         <label for="tax_percent">Sales tax %</label>
         <input type="number" step="0.001" min="0" max="99" id="tax_percent" name="tax_percent"
                value="{{ form.get('tax_percent', '0') }}">
-        <div class="field-help">Applied to every bill. Use 0 for none.</div>
       </div>
     </div>
 
@@ -75,7 +73,6 @@
       <div class="form-row">
         <label for="password">Password</label>
         <input type="password" id="password" name="password" minlength="8" autocomplete="new-password" required>
-        <div class="field-help">At least 8 characters.</div>
       </div>
       <div class="form-row">
         <label for="password_confirm">Repeat password</label>

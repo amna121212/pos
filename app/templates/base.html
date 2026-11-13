@@ -16,8 +16,10 @@
 <div class="layout">
   <aside class="sidebar">
     <div class="brand">
-      <strong>Amna POS</strong>
-      <span>{% if ctx.business %}{{ ctx.business.name }}{% elif ctx.is_platform_admin %}Platform console{% else %}Point of sale{% endif %}</span>
+      <div class="brand-text">
+        <strong>Amna POS</strong>
+        <span>{% if ctx.business %}{{ ctx.business.name }}{% elif ctx.is_platform_admin %}Platform{% else %}Point of sale{% endif %}</span>
+      </div>
     </div>
 
     <nav class="nav">
@@ -87,14 +89,7 @@
       {% endif %}
     </nav>
 
-    <div class="sidebar-foot">
-      <form method="post" action="{{ url_for('auth.logout') }}">
-        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-        <button class="btn ghost small block" type="submit" style="color:#a9bccd">Sign out</button>
-      </form>
-    </div>
   </aside>
-
   <div class="main">
     <div class="topbar">
       {% if ctx.business %}
@@ -157,8 +152,11 @@
           <span>{{ ctx.user.email }}</span>
         </div>
       </div>
+      <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn ghost small" type="submit">Sign out</button>
+      </form>
     </div>
-
     <main class="content {% block content_class %}{% endblock %}">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}

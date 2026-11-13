@@ -7,7 +7,6 @@
 <div class="page-head">
   <div>
     <h1>Products</h1>
-    <div class="sub">{{ total }} {{ 'product' if total == 1 else 'products' }} &middot; prices shown for {{ ctx.branch.code }}</div>
   </div>
   <div class="page-actions">
     <a class="btn" href="{{ url_for('catalog.categories') }}">Categories</a>

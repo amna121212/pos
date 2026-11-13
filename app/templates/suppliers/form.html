@@ -5,7 +5,6 @@
 <div class="page-head">
   <div>
     <h1>{{ 'Edit supplier' if supplier else 'Add supplier' }}</h1>
-    <div class="sub">{% if supplier %}{{ supplier.name }}{% else %}Used for purchase orders and goods received.{% endif %}</div>
   </div>
   <div class="page-actions">
     <a class="btn" href="{{ url_for('suppliers.index') }}">Back to suppliers</a>

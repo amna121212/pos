@@ -7,7 +7,6 @@
 <div class="page-head">
   <div>
     <h1>{{ business.name }}</h1>
-    <div class="sub">{{ business.business_type|label }} &middot; {{ business.city }} &middot; {{ branches|length }} branches</div>
   </div>
   <div class="page-actions">
     <a class="btn" href="{{ url_for('restaurants.index') }}">All restaurants</a>

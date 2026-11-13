@@ -6,7 +6,6 @@
 <div class="page-head">
   <div>
     <h1>{{ 'Edit recipe' if recipe else 'Add recipe' }}</h1>
-    <div class="sub">{% if recipe %}{{ recipe.name }}{% else %}What one paid sale consumes from stock.{% endif %}</div>
   </div>
   <div class="page-actions">
     <a class="btn" href="{{ url_for('inventory.recipes') }}">Back to recipes</a>
@@ -35,7 +34,6 @@
       <div class="form-row">
         <label for="yield_qty">Yield (servings)</label>
         <input type="number" step="0.001" min="0.001" id="yield_qty" name="yield_qty" value="{{ values.yield_qty }}">
-        <div class="field-help">Ingredient quantities are divided by this.</div>
       </div>
       <div class="form-row">
         <label class="check" style="margin-top:22px">

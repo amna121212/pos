@@ -7,13 +7,6 @@
 <div class="page-head">
   <div>
     <h1>Insights</h1>
-    <div class="sub">
-      {% if run %}
-        {{ run.run_code }} &middot; {{ run.period_start }} to {{ run.period_end }} &middot; {{ run.engine|label }}
-      {% else %}
-        No analysis stored for {{ ctx.business.name }}
-      {% endif %}
-    </div>
   </div>
   <div class="page-actions">
     <form method="post" action="{{ url_for('insights.refresh') }}">

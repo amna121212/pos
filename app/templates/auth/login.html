@@ -14,8 +14,10 @@
   <form class="auth-card" method="post" action="{{ url_for('auth.login') }}" novalidate>
     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-    <h1>Amna POS</h1>
-    <div class="sub">Multi-branch point of sale</div>
+    <div class="auth-brand">
+      <span class="auth-mark">A</span>
+      <h1>Amna POS</h1>
+    </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}

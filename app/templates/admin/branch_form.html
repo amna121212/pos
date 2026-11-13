@@ -6,7 +6,6 @@
 <div class="page-head">
   <div>
     <h1>Add branch</h1>
-    <div class="sub">{{ ctx.business.name }}</div>
   </div>
   <div class="page-actions">
     <a class="btn" href="{{ url_for('admin.branches') }}">Back to branches</a>
@@ -20,7 +19,6 @@
       <div class="form-row">
         <label for="code">Branch code <span class="req">*</span></label>
         <input type="text" id="code" name="code" value="{{ values.code }}" maxlength="20" required autofocus>
-        <div class="field-help">Short label used on orders and receipts, e.g. DHA.</div>
       </div>
       <div class="form-row">
         <label for="name">Branch name <span class="req">*</span></label>

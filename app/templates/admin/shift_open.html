@@ -6,7 +6,6 @@
 <div class="page-head">
   <div>
     <h1>Open shift</h1>
-    <div class="sub">{{ ctx.branch.code }} &middot; {{ ctx.branch.name }}</div>
   </div>
   <div class="page-actions">
     <a class="btn" href="{{ url_for('admin.shifts') }}">Back to shifts</a>
@@ -37,12 +36,10 @@
           <option value="{{ user.id }}" {{ 'selected' if user.id == me }}>{{ user.display_name }} &middot; {{ membership.role|label }}</option>
         {% endfor %}
       </select>
-      <div class="field-help">Each cashier can hold one open shift per branch.</div>
     </div>
     <div class="form-row">
       <label for="opening_float">Opening float (PKR) <span class="req">*</span></label>
       <input type="number" step="0.01" min="0" id="opening_float" name="opening_float" value="0" required>
-      <div class="field-help">Cash already in the drawer when the shift starts.</div>
     </div>
   </div>
   <div class="body" style="border-top:1px solid var(--line);display:flex;gap:8px">

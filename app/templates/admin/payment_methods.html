@@ -6,7 +6,6 @@
 <div class="page-head">
   <div>
     <h1>Payment methods</h1>
-    <div class="sub">{{ rows|length }} {{ 'method' if rows|length == 1 else 'methods' }} offered at the till</div>
   </div>
   <div class="page-actions">
     <a class="btn" href="{{ url_for('admin.settings') }}">Settings</a>
@@ -70,12 +69,8 @@
       <div class="form-row">
         <label for="code">Code <span class="req">*</span></label>
         <input type="text" id="code" name="code" maxlength="30" placeholder="easypaisa" required>
-        <div class="field-help">Lower case letters, digits, dash or underscore.</div>
       </div>
       <button class="btn primary" type="submit">Add method</button>
-      <p class="faint mb0" style="margin-top:10px;font-size:11.5px">
-        A method that already has payments cannot be deleted; switch it off instead.
-      </p>
     </div>
   </form>
 </div>

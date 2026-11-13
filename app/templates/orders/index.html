@@ -6,7 +6,6 @@
 <div class="page-head">
   <div>
     <h1>Orders</h1>
-    <div class="sub">{{ total }} {{ 'order' if total == 1 else 'orders' }}{% if status %} &middot; {{ status|label }}{% endif %}</div>
   </div>
   <div class="page-actions">
     {% if has_permission('order.create') %}

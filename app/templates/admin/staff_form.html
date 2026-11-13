@@ -5,7 +5,6 @@
 <div class="page-head">
   <div>
     <h1>{{ 'Edit employee' if membership else 'Add employee' }}</h1>
-    <div class="sub">{% if user %}{{ user.email }}{% else %}The account signs in with this email and password.{% endif %}</div>
   </div>
   <div class="page-actions">
     <a class="btn" href="{{ url_for('admin.staff') }}">Back to employees</a>
@@ -25,8 +24,7 @@
         <label for="email">Email <span class="req">*</span></label>
         <input type="email" id="email" name="email" value="{{ values.email }}" maxlength="150"
                {{ 'readonly' if membership }} required>
-        {% if membership %}<div class="field-help">The sign-in address cannot be changed.</div>{% endif %}
-      </div>
+              </div>
       <div class="form-row">
         <label for="role">Role <span class="req">*</span></label>
         <select id="role" name="role" required>
@@ -43,7 +41,6 @@
             <option value="{{ branch.id }}" {{ 'selected' if values.branch_id == branch.id|string }}>{{ branch.code }} &middot; {{ branch.name }}</option>
           {% endfor %}
         </select>
-        <div class="field-help">A cashier or kitchen account works one branch.</div>
       </div>
     </div>
 
@@ -52,9 +49,6 @@
         {% if not membership %}<span class="req">*</span>{% endif %}</label>
       <input type="password" id="password" name="password" minlength="8" autocomplete="new-password"
              {{ 'required' if not membership }}>
-      <div class="field-help">
-        {% if membership %}Leave blank to keep the current password.{% else %}At least 8 characters.{% endif %}
-      </div>
     </div>
   </div>
   <div class="body" style="border-top:1px solid var(--line);display:flex;gap:8px">

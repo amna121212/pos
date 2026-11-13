@@ -259,6 +259,7 @@ An existing slug, branch code, SKU or email is skipped, never overwritten.
 | `docs/SETUP.md` | Local install, configuration names, seeding, common commands |
 | `docs/DATABASE.md` | Schema groups, relationships, provenance, backup and restore |
 | `docs/ROUTES_AND_CRUD.md` | Every route, permission and CRUD coverage per table |
+| `docs/UI_GUIDELINES.md` | the visual system: tokens, components, layout, copy rules |
 | `docs/REPORTS.md` | Report calculations, filters, URL behaviour and the JSON API |
 | `docs/TESTING.md` | Test inventory, results and the report-filter regression |
 | `docs/DEPLOYMENT.md` | Gunicorn, systemd, Nginx, HTTPS, rollback |

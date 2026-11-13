@@ -7,11 +7,10 @@
 <div class="page-head">
   <div>
     <h1>Till</h1>
-    <div class="sub">{{ ctx.branch.code }} &middot; {{ ctx.branch.name }}, {{ ctx.branch.area }}</div>
   </div>
   <div class="page-actions">
     <a class="btn" href="{{ url_for('orders.index', status='held') }}">Held bills</a>
-    <form method="post" action="{{ url_for('pos.clear') }}" data-cart-form="1">
+    <form method="post" action="{{ url_for('pos.clear') }}" data-cart-form="1" class="inline-form">
       <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
       <button class="btn" type="submit">Empty basket</button>
     </form>
@@ -22,29 +21,30 @@
   <div class="flashes"><div class="flash warn"><span>{{ cart_error }}</span></div></div>
 {% endif %}
 
-<form class="toolbar" method="get" action="{{ url_for('pos.index') }}">
-  <div class="field search">
-    <label for="q">Search products</label>
-    <input type="search" id="q" name="q" value="{{ search }}" placeholder="Name or SKU" autocomplete="off">
-  </div>
-  <div class="field">
-    <label for="category">Category</label>
-    <select id="category" name="category">
-      <option value="">All categories</option>
-      {% for category in categories %}
-        <option value="{{ category.id }}" {{ 'selected' if category.id == category_id }}>{{ category.name }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <button class="btn primary" type="submit">Filter</button>
-  <div class="field wide">
-    <label for="scan">Barcode scanner</label>
-    <input type="text" id="scan" name="scan" class="scan-input" placeholder="Scan and press Enter" autocomplete="off">
-  </div>
-</form>
-
 <div class="till">
-  <div>
+  <div class="pos-left">
+    <form class="toolbar" method="get" action="{{ url_for('pos.index') }}">
+      <input type="hidden" name="category" value="{{ category_id or '' }}">
+      <div class="field search">
+        <label class="sr-only" for="q">Search products</label>
+        <input type="search" id="q" name="q" value="{{ search }}" placeholder="Search name or SKU" autocomplete="off">
+      </div>
+      <button class="btn" type="submit">Search</button>
+      <div class="field wide">
+        <label class="sr-only" for="scan">Barcode</label>
+        <input type="text" id="scan" name="scan" class="scan-input" placeholder="Scan barcode" autocomplete="off">
+      </div>
+    </form>
+
+    <div class="chips">
+      <a class="chip {{ 'is-active' if not category_id }}"
+         href="{{ url_for('pos.index', q=search or None) }}">All</a>
+      {% for category in categories %}
+        <a class="chip {{ 'is-active' if category.id == category_id }}"
+           href="{{ url_for('pos.index', category=category.id, q=search or None) }}">{{ category.name }}</a>
+      {% endfor %}
+    </div>
+
     {% if products %}
       <div class="product-grid">
         {% for item in products %}
@@ -63,11 +63,11 @@
               <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
               <input type="hidden" name="product_id" value="{{ product.id }}">
               <input type="hidden" name="qty" value="1">
-              <button class="product-card block" type="submit" style="width:100%">
+              <button class="product-card block" type="submit">
                 <span class="name">{{ product.name }}</span>
                 <span class="meta">
                   <span class="price">{{ branch_product.sale_price|pkr }}</span>
-                  <span class="faint mono" style="font-size:11px">{{ product.sku }}</span>
+                  <span class="faint mono" style="font-size:10.5px">{{ product.sku }}</span>
                 </span>
               </button>
             </form>
@@ -79,13 +79,11 @@
         <div class="empty">
           {% if search or category_id %}
             <strong>No products match</strong>
-            Change the search or category filter.
+            <a href="{{ url_for('pos.index') }}">Clear filters</a>
           {% else %}
-            <strong>No products at this branch yet</strong>
+            <strong>No products at this branch</strong>
             {% if can('menu.manage') %}
-              Add a category, then a product, in <a href="{{ url_for('catalog.categories') }}">Catalogue</a>.
-            {% else %}
-              A manager needs to add products before the till can sell.
+              <a href="{{ url_for('catalog.products') }}">Products</a>
             {% endif %}
           {% endif %}
         </div>
@@ -108,7 +106,7 @@
 
         <div class="form-grid">
           <div class="form-row">
-            <label for="order_type">Order type</label>
+            <label for="order_type">Type</label>
             <select id="order_type" name="order_type">
               <option value="dine_in">Dine in</option>
               <option value="takeaway">Takeaway</option>
@@ -136,7 +134,7 @@
               </select>
             </div>
             <div class="form-row">
-              <label for="discount_value">Amount</label>
+              <label for="discount_value">Value</label>
               <input type="number" step="0.01" min="0" id="discount_value" name="discount_value" placeholder="0">
             </div>
           </div>
@@ -144,7 +142,7 @@
         {% endif %}
 
         <div class="form-row">
-          <label for="payment_method_id">Payment method</label>
+          <label for="payment_method_id">Payment</label>
           <select id="payment_method_id" name="payment_method_id">
             <option value="">Pay later</option>
             {% for method in payment_methods %}
@@ -152,14 +150,16 @@
             {% endfor %}
           </select>
         </div>
-        <div class="form-row">
-          <label for="amount_paid">Amount received</label>
-          <input type="number" step="0.01" min="0" id="amount_paid" name="amount_paid" placeholder="Full total">
-          <div class="field-help">Leave blank to bill the full amount due, after any discount.</div>
-        </div>
-        <div class="form-row">
-          <label for="note">Note</label>
-          <input type="text" id="note" name="note" maxlength="150" placeholder="Optional">
+
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="amount_paid">Received</label>
+            <input type="number" step="0.01" min="0" id="amount_paid" name="amount_paid" placeholder="Full total">
+          </div>
+          <div class="form-row">
+            <label for="note">Note</label>
+            <input type="text" id="note" name="note" maxlength="150" placeholder="Optional">
+          </div>
         </div>
 
         <button class="btn primary block btn-lg" type="submit" id="pay-button">Take payment</button>

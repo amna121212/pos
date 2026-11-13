@@ -7,7 +7,6 @@
 <div class="page-head">
   <div>
     <h1>Kitchen</h1>
-    <div class="sub">{{ ctx.branch.name }} &middot; {{ boards|length }} {{ 'ticket' if boards|length == 1 else 'tickets' }}</div>
   </div>
   <div class="page-actions">
     <a class="btn {{ 'primary' if show == 'active' }}" href="{{ url_for('kitchen.index', show='active') }}">Active</a>
@@ -25,7 +24,7 @@
         <header>
           <div>
             <h2 class="mono">{{ ticket.ticket_number }}</h2>
-            <div class="hint">
+            <div class="hint nowrap">
               {{ order.order_number }} &middot; {{ order.order_type|label }} &middot; {{ ticket.created_at|timesince }} ago
             </div>
           </div>
@@ -61,7 +60,7 @@
           </table>
         </div>
         {% if can_update %}
-          <div class="body" style="border-top:1px solid var(--line);display:flex;gap:6px">
+          <div class="body" style="border-top:1px solid var(--line);display:flex;gap:6px;flex-wrap:wrap">
             {% for value in statuses %}
               {% if value != ticket.status %}
                 <form method="post" action="{{ url_for('kitchen.set_status', ticket_id=ticket.id) }}">

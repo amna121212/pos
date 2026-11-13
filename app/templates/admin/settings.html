@@ -5,7 +5,6 @@
 <div class="page-head">
   <div>
     <h1>Settings</h1>
-    <div class="sub">{{ business.name }}</div>
   </div>
 </div>
 
@@ -52,7 +51,6 @@
                      {{ 'checked' if settings.allow_negative_stock }} {{ '' if can_edit else 'disabled' }}>
               <span>Allow stock to go below zero</span>
             </label>
-            <div class="field-help">Off means a sale is refused when ingredients run out.</div>
           </div>
           {% if can_edit %}
             <button class="btn primary" type="submit">Save settings</button>

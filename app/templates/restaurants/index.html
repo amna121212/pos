@@ -7,11 +7,6 @@
 <div class="page-head">
   <div>
     <h1>Restaurants</h1>
-    <div class="sub">
-      {{ rows|length }} {{ 'restaurant' if rows|length == 1 else 'restaurants' }}
-      {% if not can_open_any %}you have access to{% endif %}
-      &middot; {{ rows|sum(attribute='branch_count') }} branches
-    </div>
   </div>
   <div class="page-actions">
     {% if has_permission('branch.manage') %}
