@@ -18,8 +18,83 @@
     }
   }
 
+  function money(value) {
+    var amount = Number(value || 0);
+    return 'Rs ' + amount.toLocaleString('en-PK', {
+      minimumFractionDigits: 2, maximumFractionDigits: 2
+    });
+  }
+
+  /* Keep the "amount received" hint in step with the total actually due, so a
+     discounted bill never looks like it needs a manual figure. */
+  function updateDue(payload) {
+    var field = document.getElementById('amount_paid');
+    if (!field || !payload || !payload.grand) { return; }
+    field.placeholder = 'Full total — ' + money(payload.grand);
+    field.setAttribute('data-due', payload.grand);
+  }
+
+  function discountFields() {
+    return {
+      kind: document.getElementById('discount_kind'),
+      value: document.getElementById('discount_value')
+    };
+  }
+
+  function setDiscountError(message) {
+    var box = document.getElementById('discount-error');
+    if (!box) { return; }
+    if (!message) {
+      box.hidden = true;
+      box.textContent = '';
+      return;
+    }
+    box.textContent = message;
+    box.hidden = false;
+  }
+
+  /* Re-price the basket when the discount changes, so the totals block and the
+     amount hint show the discounted figure before checkout. */
+  var repriceTimer = null;
+  function scheduleReprice() {
+    if (repriceTimer) { window.clearTimeout(repriceTimer); }
+    repriceTimer = window.setTimeout(reprice, 280);
+  }
+
+  async function reprice() {
+    var fields = discountFields();
+    if (!fields.value) { return; }
+    var body = new FormData();
+    body.append('_csrf', csrf);
+    body.append('discount_kind', fields.kind ? fields.kind.value : 'percent');
+    body.append('discount_value', fields.value.value || '');
+    var response;
+    try {
+      response = await fetch('/pos/quote', {
+        method: 'POST',
+        body: body,
+        headers: { 'X-Requested-With': 'fetch', 'X-CSRF-Token': csrf },
+        credentials: 'same-origin'
+      });
+    } catch (error) {
+      return;
+    }
+    var payload = await response.json().catch(function () { return null; });
+    if (!response.ok || !payload || payload.ok !== true) {
+      setDiscountError((payload && payload.error) || 'That discount cannot be applied.');
+      return;
+    }
+    setDiscountError(null);
+    swap(payload.html);
+    updateDue(payload);
+  }
+
   async function submitCartForm(form) {
     var data = new FormData(form);
+    // Cart edits must keep the discount, otherwise the totals jump back up.
+    var fields = discountFields();
+    if (fields.kind) { data.append('discount_kind', fields.kind.value); }
+    if (fields.value) { data.append('discount_value', fields.value.value || ''); }
     var response;
     try {
       response = await fetch(form.action, {
@@ -39,6 +114,7 @@
       return false;
     }
     swap(payload.html);
+    updateDue(payload);
     var counter = document.querySelector('.card > header .hint');
     if (counter) {
       counter.textContent = payload.lines + (payload.lines === 1 ? ' line' : ' lines');
@@ -80,6 +156,23 @@
     typeSelect.addEventListener('change', syncTableRow);
     syncTableRow();
   }
+
+  // A discount reprices the basket live, so checkout never asks for a figure
+  // the cashier has to work out by hand.
+  var discountInputs = discountFields();
+  if (discountInputs.value) {
+    discountInputs.value.addEventListener('input', scheduleReprice);
+  }
+  if (discountInputs.kind) {
+    discountInputs.kind.addEventListener('change', scheduleReprice);
+  }
+  (function initialiseDue() {
+    var field = document.getElementById('amount_paid');
+    var total = document.querySelector('#cart-panel .totals .grand .num');
+    if (field && total) {
+      field.placeholder = 'Full total — ' + total.textContent.trim();
+    }
+  })();
 
   var scan = document.getElementById('scan');
   if (scan) {

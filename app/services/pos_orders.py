@@ -25,7 +25,7 @@ from app.order_models import (
 from app.platform_models import TaxRule
 from app.services.audit import write_audit
 from app.services.errors import PaymentError
-from app.services.orders import capture_payment, finalize_receipt, order_totals
+from app.services.orders import capture_payment, compute_discount, finalize_receipt, order_totals
 from app.services.recipes import post_recipe_consumption
 from app.timeutil import utcnow
 
@@ -106,15 +106,23 @@ def price_lines(*, business_id, branch_id, lines):
 
 
 def quote(*, business_id, branch_id, lines, discount_kind=None, discount_value=0):
-    """Everything the cart panel needs to render, including tax."""
+    """Everything the cart panel needs to render, including tax and discount.
+
+    `discount_value` means different things depending on `discount_kind`: a
+    percentage of the subtotal for `percent`, a flat rupee amount for `fixed`.
+    Passing the raw figure straight through as an amount is what made a 10%
+    discount take off ten rupees.
+    """
     priced = price_lines(business_id=business_id, branch_id=branch_id, lines=lines)
     subtotal = money(sum((line["line_total"] for line in priced), money(0)))
     rule = active_tax_rule(business_id)
     rate = money(rule.rate_percent) if rule is not None else money(0)
-    try:
-        totals = order_totals(subtotal=subtotal, discount=discount_value, tax_rate_percent=rate)
-    except PaymentError:
-        totals = order_totals(subtotal=subtotal, discount=0, tax_rate_percent=rate)
+
+    discount = money(0)
+    if discount_kind in ("percent", "fixed") and money(discount_value) > 0:
+        discount = compute_discount(subtotal, discount_kind, discount_value)
+
+    totals = order_totals(subtotal=subtotal, discount=discount, tax_rate_percent=rate)
     return {
         "lines": priced,
         "subtotal": subtotal,
@@ -123,6 +131,8 @@ def quote(*, business_id, branch_id, lines, discount_kind=None, discount_value=0
         "grand": totals["grand"],
         "tax_rate": rate,
         "tax_rule": rule,
+        "discount_kind": discount_kind,
+        "discount_value": money(discount_value),
     }
 
 
@@ -176,6 +186,18 @@ def _open_dining_session(*, business_id, branch_id, table_id):
     return session_row
 
 
+def resolve_amount_paid(grand_total, amount_paid):
+    """What the guest actually hands over.
+
+    Blank means "bill the full amount due", which is the total *after* any
+    discount and tax. Falling back to a pre-discount figure is what used to make
+    a discounted bill fail with "received amount is more than the total due".
+    """
+    if amount_paid is None or str(amount_paid).strip() == "":
+        return money(grand_total)
+    return money(amount_paid)
+
+
 def create_order(
     *,
     business_id,
@@ -186,7 +208,7 @@ def create_order(
     discount_kind=None,
     discount_value=0,
     payment_method_id=None,
-    amount_paid=0,
+    amount_paid=None,
     note="",
     cashier_shift_id=None,
     actor_user_id=None,
@@ -205,7 +227,7 @@ def create_order(
     if not priced:
         raise PaymentError("Add at least one item before taking payment.")
 
-    amount_paid = money(amount_paid or 0)
+    amount_paid = resolve_amount_paid(quote_result["grand"], amount_paid)
     if amount_paid > quote_result["grand"]:
         raise PaymentError("Received amount is more than the total due.")
     if amount_paid < 0:

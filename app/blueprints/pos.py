@@ -29,24 +29,68 @@ def _wants_json():
     return request.headers.get("X-Requested-With") == "fetch" or request.accept_mimetypes.best == "application/json"
 
 
-def _cart_payload(extra=None):
-    ctx = context()
+def _request_discount(strict=False):
+    """The discount typed in the checkout form, or (None, 0).
+
+    `strict` is used by the live re-quote so an out-of-range percentage is
+    reported; cart edits ignore it rather than breaking the till.
+    """
     try:
-        priced = quote(
-            business_id=ctx.business_id,
-            branch_id=ctx.branch_id,
-            lines=basket.get_cart()["lines"],
-        )
-    except (PaymentError, TenantAccessError):
+        raw = (request.form.get("discount_value") or "").strip()
+        if not raw:
+            return None, Decimal("0")
+        value = _money_value(raw)
+        if value <= 0:
+            return None, Decimal("0")
+        kind = request.form.get("discount_kind") or "percent"
+        if kind == "percent" and value >= 100:
+            raise PaymentError("A percentage discount must be below 100.")
+        return kind, value
+    except PaymentError:
+        if strict:
+            raise
+        return None, Decimal("0")
+
+
+def _quote_lines(lines, discount_kind=None, discount_value=0):
+    ctx = context()
+    return quote(
+        business_id=ctx.business_id,
+        branch_id=ctx.branch_id,
+        lines=lines,
+        discount_kind=discount_kind,
+        discount_value=discount_value,
+    )
+
+
+def _cart_payload(extra=None, strict_discount=False):
+    ctx = context()
+    kind, value = _request_discount(strict=strict_discount)
+    lines = basket.get_cart()["lines"]
+    try:
+        priced = _quote_lines(lines, kind, value)
+    except PaymentError:
+        if kind:
+            # The discount was the problem, not the basket: keep the items and
+            # show the bill without it. The live re-quote reports the reason.
+            priced = _quote_lines(lines)
+        else:
+            basket.clear()
+            flash("The basket was cleared because an item is no longer available.", "warn")
+            priced = _quote_lines([])
+    except TenantAccessError:
         basket.clear()
         flash("The basket was cleared because an item is no longer available.", "warn")
-        priced = quote(business_id=ctx.business_id, branch_id=ctx.branch_id, lines=[])
+        priced = _quote_lines([])
     html = render_template("pos/_cart.html", cart=basket.get_cart(), quote=priced)
     payload = {
         "ok": True,
         "html": html,
         "lines": len(basket.get_cart()["lines"]),
         "grand": str(priced["grand"]),
+        "discount": str(priced["discount"]),
+        "subtotal": str(priced["subtotal"]),
+        "tax": str(priced["tax"]),
     }
     if extra:
         payload.update(extra)
@@ -246,6 +290,16 @@ def configure(product_id):
     )
 
 
+@bp.post("/quote")
+@branch_required
+def requote():
+    """Re-price the basket for a discount change, without touching the order."""
+    try:
+        return _cart_payload(strict_discount=True)
+    except PaymentError as error:
+        return jsonify({"ok": False, "error": str(error)}), 400
+
+
 @bp.post("/checkout")
 @branch_required
 def checkout():
@@ -271,13 +325,13 @@ def checkout():
                 discount = Decimal("0")
                 discount_kind = None
 
-        amount_paid = _money_value(request.form.get("amount_paid"), "0")
-        if not (request.form.get("amount_paid") or "").strip():
-            amount_paid = quote(
-                business_id=ctx.business_id, branch_id=ctx.branch_id, lines=cart["lines"]
-            )["grand"]
+        # Blank means "bill the full amount due". The service resolves that against
+        # the discounted total, so the till never asks for a figure twice.
+        amount_paid = None
+        if (request.form.get("amount_paid") or "").strip():
+            amount_paid = _money_value(request.form.get("amount_paid"))
         payment_method_id = request.form.get("payment_method_id", type=int)
-        if amount_paid > 0 and not payment_method_id:
+        if (amount_paid or 0) > 0 and not payment_method_id:
             raise PaymentError("Choose a payment method.")
 
         order = create_order(

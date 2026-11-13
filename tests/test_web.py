@@ -11,6 +11,7 @@ from app.models import Product, Supplier, User
 from app.security import _role_permissions, clear_permission_cache
 
 from tests import support
+from app.money import money
 from app.services.orders import compute_discount, order_totals
 
 
@@ -341,6 +342,82 @@ def test_dashboard_numbers_come_from_the_database(client, app):
     body = client.get("/").get_data(as_text=True)
     expected = f"Rs {float(row):,.2f}"
     assert expected in body, f"dashboard does not show today's net sales {expected}"
+
+
+def test_blank_amount_bills_the_discounted_total(app):
+    """Regression: a discount used to be answered with the *pre-discount* total.
+
+    The till leaves `amount_paid` blank to mean "bill whatever is due". The old
+    code filled that blank with an undiscounted quote, which the service then
+    rejected as an overpayment, so a discounted sale could not be completed.
+    """
+    from app.services.pos_orders import quote, resolve_amount_paid
+
+    with app.app_context():
+        row = db.session.execute(
+            text(
+                """
+                SELECT bp.product_id FROM branch_products bp
+                WHERE bp.branch_id = :branch ORDER BY bp.product_id LIMIT 1
+                """
+            ),
+            {"branch": support.BUSINESS_ID},
+        ).scalar()
+        lines = [{"product_id": row, "qty": 2}]
+        full = quote(business_id=support.BUSINESS_ID, branch_id=support.BUSINESS_ID, lines=lines)
+        discounted = quote(
+            business_id=support.BUSINESS_ID,
+            branch_id=support.BUSINESS_ID,
+            lines=lines,
+            discount_kind="percent",
+            discount_value=10,
+        )
+
+    assert discounted["grand"] < full["grand"], "the discount must lower the bill"
+    # Blank now resolves to the discounted total, so the sale completes.
+    assert resolve_amount_paid(discounted["grand"], None) == discounted["grand"]
+    assert resolve_amount_paid(discounted["grand"], "") == discounted["grand"]
+    assert resolve_amount_paid(discounted["grand"], "   ") == discounted["grand"]
+    # The old behaviour would have handed over the undiscounted total.
+    assert resolve_amount_paid(discounted["grand"], full["grand"]) > discounted["grand"]
+    # A figure the cashier types is still respected exactly.
+    assert resolve_amount_paid(full["grand"], "100") == money("100")
+
+
+def test_percent_discount_is_a_percentage_and_fixed_is_rupees(app):
+    """A 10% discount must take 10% of the subtotal, not ten rupees."""
+    from app.services.pos_orders import quote
+
+    with app.app_context():
+        product_id = db.session.execute(
+            text(
+                "SELECT product_id FROM branch_products WHERE branch_id = :b ORDER BY product_id LIMIT 1"
+            ),
+            {"b": support.BUSINESS_ID},
+        ).scalar()
+        lines = [{"product_id": product_id, "qty": 3}]
+        base = quote(business_id=support.BUSINESS_ID, branch_id=support.BUSINESS_ID, lines=lines)
+        percent = quote(
+            business_id=support.BUSINESS_ID,
+            branch_id=support.BUSINESS_ID,
+            lines=lines,
+            discount_kind="percent",
+            discount_value=10,
+        )
+        fixed = quote(
+            business_id=support.BUSINESS_ID,
+            branch_id=support.BUSINESS_ID,
+            lines=lines,
+            discount_kind="fixed",
+            discount_value=10,
+        )
+
+    expected_percent = money(base["subtotal"] * money("10") / money("100"))
+    assert percent["discount"] == expected_percent
+    assert percent["discount"] > money("10"), "a 10% discount is not ten rupees"
+    assert fixed["discount"] == money("10")
+    assert percent["grand"] < base["grand"]
+    assert fixed["grand"] < base["grand"]
 
 
 def test_totals_use_decimal_rupees():

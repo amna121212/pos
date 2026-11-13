@@ -5,7 +5,7 @@ cd /opt/student-projects/pos
 .venv/bin/python -m pytest -q
 ```
 
-83 tests, all passing. The suite reads the live `retail_pos_db`; it does not create
+85 tests, all passing. The suite reads the live `retail_pos_db`; it does not create
 tenants, users or orders, and it never writes a business record. Session cookies are
 signed directly, so no account password is stored in the test code.
 
@@ -13,8 +13,15 @@ signed directly, so no account password is stored in the test code.
 | --- | --- | --- |
 | `tests/test_database_integrity.py` | 17 | database name, model registration, preserved seed data, ledger integrity, money types, tenant blocks, CSV dry runs |
 | `tests/test_history_plan.py` | 4 | pure pricing helpers for the synthetic history |
-| `tests/test_web.py` | 48 | sign-in, CSRF, permissions, every manager page, super admin switching, tenant isolation, dashboard figures, context switching |
+| `tests/test_web.py` | 50 | sign-in, CSRF, permissions, every manager page, super admin switching, tenant isolation, dashboard figures, context switching, discount maths |
 | `tests/test_reports.py` | 14 | report API contract, filter persistence, reconciliation with SQL, empty periods, isolation |
+
+### Till discount regressions
+
+| Test | Asserts |
+| --- | --- |
+| `test_percent_discount_is_a_percentage_and_fixed_is_rupees` | a 10% discount equals 10% of the subtotal, not ten rupees; a flat discount stays flat |
+| `test_blank_amount_bills_the_discounted_total` | a blank "amount received" resolves to the total *after* discount, so a discounted sale completes instead of being refused as an overpayment |
 
 Accounts are **resolved by role at run time** through `tests/support.py`, never hard
 coded. An administrator can disable or re-scope a seeded person from the Employees
