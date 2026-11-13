@@ -92,7 +92,7 @@ def test_signup_page_renders(client):
     assert response.status_code == 200
     body = response.get_data(as_text=True)
     assert "Create account" in body
-    assert "First branch name" in body
+    assert "First branch" in body
 
 
 def test_signup_rejects_a_short_password(client):
@@ -149,8 +149,8 @@ def test_cashier_dashboard_renders(client, app):
     response = client.get("/")
     assert response.status_code == 200
     body = response.get_data(as_text=True)
-    assert "Dashboard" in body
-    assert "Till" in body
+    assert "Overview" in body
+    assert "Billing" in body
     assert "Staff" not in body
 
 
@@ -545,9 +545,9 @@ def test_super_admin_branch_picker_lists_only_the_selected_business(client, app)
     sign_in(client, app, SUPER_ADMIN)
     _select_business(client, 2)
     body = client.get("/").get_data(as_text=True)
-    assert "&middot; Gulberg III" in body
-    assert "&middot; Model Town" in body
-    assert "&middot; Johar Town" not in body
+    assert "· Gulberg III" in body
+    assert "· Model Town" in body
+    assert "· Johar Town" not in body
 
 
 def test_super_admin_till_shows_the_selected_business_catalogue(client, app):
@@ -559,8 +559,8 @@ def test_super_admin_till_shows_the_selected_business_catalogue(client, app):
         assert mine is not None and theirs is not None
         mine_name, theirs_name = mine.name, theirs.name
     body = client.get("/pos").get_data(as_text=True)
-    assert f'class="name">{mine_name}</span>' in body
-    assert f'class="name">{theirs_name}</span>' not in body
+    assert f'<span class="nm">{mine_name}</span>' in body
+    assert f'<span class="nm">{theirs_name}</span>' not in body
 
 
 def test_super_admin_business_dropdown_lists_every_business(client, app):

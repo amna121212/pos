@@ -1,145 +1,162 @@
 {% extends "base.html" %}
-{% block title %}{{ order.order_number }} &middot; Amna POS{% endblock %}
+{% block title %}{{ order.order_number }}{% endblock %}
+{% block section %}Sales / Orders{% endblock %}
+{% block heading %}{{ order.order_number }}{% endblock %}
+{% block content_class %}wide{% endblock %}
+
+{% block page_sub %}
+  <div class="sub">
+    <span class="badge {{ order.status|badge }}">{{ order.status|label }}</span>
+    {{ order.order_type|label }} · {{ order.created_at|localtime }}
+  </div>
+{% endblock %}
+
+{% block actions %}
+  <a class="btn" href="{{ url_for('orders.index') }}">Back to orders</a>
+  {% if detail.receipt %}
+    <a class="btn pri" href="{{ url_for('orders.receipt', order_id=order.id) }}">Receipt</a>
+  {% endif %}
+{% endblock %}
 
 {% block content %}
-<div class="page-head">
+<div class="split">
   <div>
-    <h1>{{ order.order_number }}</h1>
-    <div class="sub">
-      <span class="badge {{ order.status|badge }}">{{ order.status|label }}</span>
-      &middot; {{ order.order_type|label }} &middot; {{ order.created_at|localtime }}
-      {% if order.dataset_code == 'SYNTHETIC_HISTORY_V1' %}&middot; demo history{% endif %}
-    </div>
-  </div>
-  <div class="page-actions">
-    <a class="btn" href="{{ url_for('orders.index') }}">All orders</a>
-    {% if detail.receipt %}
-      <a class="btn primary" href="{{ url_for('orders.receipt', order_id=order.id) }}">Receipt</a>
-    {% endif %}
-  </div>
-</div>
-
-<div class="cols">
-  <div>
-    <div class="card">
-      <header><h2>Items</h2></header>
-      <div class="body flush">
-        <table>
-          <thead>
-            <tr><th>Item</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Line</th></tr>
-          </thead>
-          <tbody>
-            {% for item, product in detail.lines %}
-              <tr>
-                <td>
-                  <div>{{ product.name }}</div>
-                  <small class="faint mono">{{ product.sku }}</small>
-                  {% if item.note %}<div class="faint" style="font-size:11.5px">{{ item.note }}</div>{% endif %}
-                </td>
-                <td class="num">{{ item.quantity }}</td>
-                <td class="num">{{ item.unit_price|pkr }}</td>
-                <td class="num">{{ item.line_total|pkr }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        <div class="totals">
-          <div><span>Subtotal</span><span class="num">{{ order.subtotal|pkr }}</span></div>
-          {% if order.discount_total > 0 %}
-            <div><span>Discount</span><span class="num">&minus;{{ order.discount_total|pkr }}</span></div>
-          {% endif %}
-          <div><span>Tax</span><span class="num">{{ order.tax_total|pkr }}</span></div>
-          <div class="grand"><span>Total</span><span class="num">{{ order.grand_total|pkr }}</span></div>
-          {% if detail.paid %}
-            <div><span>Paid</span><span class="num">{{ detail.paid|pkr }}</span></div>
-          {% endif %}
-          {% if detail.due > 0 and order.status not in ('cancelled','voided') %}
-            <div><span><b>Balance due</b></span><span class="num"><b>{{ detail.due|pkr }}</b></span></div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <header><h2>Payments</h2></header>
-      <div class="body flush">
-        {% if detail.payments %}
-          <table>
-            <thead><tr><th>Method</th><th>Status</th><th>Paid at</th><th class="num">Amount</th></tr></thead>
-            <tbody>
-              {% for payment, method in detail.payments %}
-                <tr>
-                  <td>{{ method.label }}</td>
-                  <td><span class="badge {{ payment.status|badge }}">{{ payment.status|label }}</span></td>
-                  <td class="muted nowrap">{{ payment.paid_at|localtime }}</td>
-                  <td class="num">{{ payment.amount|pkr }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        {% else %}
-          <div class="empty"><strong>No payment captured</strong>This bill is unpaid.</div>
-        {% endif %}
-      </div>
-    </div>
-
-    {% if can('order.refund') and order.status == 'paid' and detail.due <= 0 %}
-      <details class="card">
-        <summary style="padding:11px 14px;cursor:pointer;font-size:13.5px;font-weight:600">Refund part of this order</summary>
-        <form method="post" action="{{ url_for('orders.refund', order_id=order.id) }}" class="body">
-          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-          <table>
-            <thead><tr><th>Item</th><th class="num">Ordered</th><th class="num">Refund qty</th></tr></thead>
+    <section class="panel">
+      <header class="panel-h">
+        <h2>Items</h2>
+        <span class="meta">{{ detail.lines|length }} lines</span>
+      </header>
+      <div class="panel-b flush">
+        <div class="tbl-wrap">
+          <table class="data">
+            <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Line</th></tr></thead>
             <tbody>
               {% for item, product in detail.lines %}
                 <tr>
-                  <td>{{ product.name }} <span class="faint mono">{{ product.sku }}</span></td>
-                  <td class="num">{{ item.quantity }}</td>
-                  <td class="num" style="width:120px">
-                    <input type="hidden" name="item_id" value="{{ item.id }}">
-                    <input type="number" name="qty_{{ item.id }}" min="0" max="{{ item.quantity }}" value="0"
-                           style="max-width:90px;margin-left:auto">
+                  <td>
+                    {{ product.name }}
+                    <div class="r-sub mono">{{ product.sku }}</div>
+                    {% if item.note %}<div class="r-sub">{{ item.note }}</div>{% endif %}
                   </td>
+                  <td class="num">{{ item.quantity }}</td>
+                  <td class="num">{{ item.unit_price|pkr }}</td>
+                  <td class="num">{{ item.line_total|pkr }}</td>
                 </tr>
               {% endfor %}
             </tbody>
           </table>
-          <div class="form-grid" style="margin-top:12px">
-            <div class="form-row">
-              <label for="refund_method">Refund to</label>
-              <select id="refund_method" name="payment_method_id">
+        </div>
+        <div class="bill-sum">
+          <div class="r"><span>Subtotal</span><span>{{ order.subtotal|pkr }}</span></div>
+          {% if order.discount_total > 0 %}
+            <div class="r"><span>Discount</span><span>&minus;{{ order.discount_total|pkr }}</span></div>
+          {% endif %}
+          <div class="r"><span>Tax</span><span>{{ order.tax_total|pkr }}</span></div>
+          <div class="due"><span>Total</span><span class="num">{{ order.grand_total|pkr }}</span></div>
+          {% if detail.paid %}
+            <div class="r"><span>Paid</span><span>{{ detail.paid|pkr }}</span></div>
+          {% endif %}
+          {% if detail.due > 0 and order.status not in ('cancelled','voided') %}
+            <div class="r"><span><b>Balance due</b></span><span><b>{{ detail.due|pkr }}</b></span></div>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header class="panel-h"><h2>Payments</h2></header>
+      <div class="panel-b flush">
+        {% if detail.payments %}
+          <div class="tbl-wrap">
+            <table class="data">
+              <thead><tr><th>Method</th><th>Status</th><th>Paid</th><th class="num">Amount</th></tr></thead>
+              <tbody>
+                {% for payment, method in detail.payments %}
+                  <tr>
+                    <td>{{ method.label }}</td>
+                    <td><span class="badge {{ payment.status|badge }}">{{ payment.status|label }}</span></td>
+                    <td class="muted nowrap">{{ payment.paid_at|localtime }}</td>
+                    <td class="num">{{ payment.amount|pkr }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty"><strong>No payment captured</strong></div>
+        {% endif %}
+      </div>
+    </section>
+
+    {% if can('order.refund') and order.status == 'paid' and detail.due <= 0 %}
+      <section class="panel">
+        <header class="panel-h"><h2>Refund</h2></header>
+        <form method="post" action="{{ url_for('orders.refund', order_id=order.id) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <div class="panel-b flush">
+            <div class="tbl-wrap">
+              <table class="data">
+                <thead><tr><th>Item</th><th class="num">Ordered</th><th class="num">Refund qty</th></tr></thead>
+                <tbody>
+                  {% for item, product in detail.lines %}
+                    <tr>
+                      <td>{{ product.name }} <span class="faint mono">{{ product.sku }}</span></td>
+                      <td class="num">{{ item.quantity }}</td>
+                      <td class="num">
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                        <input type="number" name="qty_{{ item.id }}" min="0" max="{{ item.quantity }}" value="0"
+                               style="width:80px;margin-left:auto">
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <div class="panel-b">
+              <div class="grid-form">
+                <div class="field">
+                  <label for="refund_method">Refund to</label>
+                  <select id="refund_method" name="payment_method_id">
+                    {% for method in payment_methods %}
+                      <option value="{{ method.id }}">{{ method.label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="refund_reason">Reason</label>
+                  <input type="text" id="refund_reason" name="reason" maxlength="160" placeholder="Customer refund">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-act">
+            <button class="btn danger" type="submit">Post refund</button>
+          </div>
+        </form>
+      </section>
+    {% endif %}
+  </div>
+
+  <div>
+    <section class="panel">
+      <header class="panel-h"><h2>Actions</h2></header>
+      <div class="panel-b" style="display:grid;gap:8px">
+        {% if detail.due > 0 and order.status not in ('cancelled','voided','paid') %}
+          <form method="post" action="{{ url_for('orders.pay', order_id=order.id) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <div class="field">
+              <label for="pay_amount">Amount</label>
+              <input type="number" step="0.01" min="0.01" id="pay_amount" name="amount" value="{{ detail.due }}">
+            </div>
+            <div class="field">
+              <label for="pay_method">Method</label>
+              <select id="pay_method" name="payment_method_id">
                 {% for method in payment_methods %}
                   <option value="{{ method.id }}">{{ method.label }}</option>
                 {% endfor %}
               </select>
             </div>
-            <div class="form-row">
-              <label for="refund_reason">Reason</label>
-              <input type="text" id="refund_reason" name="reason" maxlength="160" placeholder="Customer refund">
-            </div>
-          </div>
-          <button class="btn danger" type="submit">Post refund</button>
-        </form>
-      </details>
-    {% endif %}
-  </div>
-
-  <div>
-    <div class="card">
-      <header><h2>Actions</h2></header>
-      <div class="body" style="display:grid;gap:8px">
-        {% if detail.due > 0 and order.status not in ('cancelled','voided','paid') %}
-          <form method="post" action="{{ url_for('orders.pay', order_id=order.id) }}">
-            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-            <label for="pay_amount">Take payment</label>
-            <input type="number" step="0.01" min="0.01" id="pay_amount" name="amount"
-                   value="{{ detail.due }}" style="margin-bottom:6px">
-            <select name="payment_method_id" style="margin-bottom:6px">
-              {% for method in payment_methods %}
-                <option value="{{ method.id }}">{{ method.label }}</option>
-              {% endfor %}
-            </select>
-            <button class="btn primary block" type="submit">Record payment</button>
+            <button class="btn pri block" type="submit">Record payment</button>
           </form>
         {% endif %}
 
@@ -155,51 +172,56 @@
           </form>
         {% endif %}
 
-        {% if can('order.void') and order.status not in ('paid','cancelled','voided') %}
-          <form method="post" action="{{ url_for('orders.cancel', order_id=order.id) }}">
-            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-            <input type="text" name="reason" maxlength="200" placeholder="Cancellation reason" style="margin-bottom:6px">
-            <button class="btn danger block" type="submit">Cancel order</button>
-          </form>
-        {% endif %}
-
         {% if detail.receipt %}
           <form method="post" action="{{ url_for('orders.print_receipt', order_id=order.id) }}">
             <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
             <button class="btn block" type="submit">Record print job</button>
           </form>
         {% endif %}
-      </div>
-    </div>
 
-    <div class="card">
-      <header><h2>History</h2></header>
-      <div class="body">
+        {% if can('order.void') and order.status not in ('paid','cancelled','voided') %}
+          <form method="post" action="{{ url_for('orders.cancel', order_id=order.id) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <div class="field">
+              <label for="cancel_reason">Reason</label>
+              <input type="text" id="cancel_reason" name="reason" maxlength="200">
+            </div>
+            <button class="btn danger block" type="submit">Cancel order</button>
+          </form>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="panel">
+      <header class="panel-h"><h2>History</h2></header>
+      <div class="panel-b">
         {% if detail.events %}
-          <dl class="kv" style="grid-template-columns:1fr">
+          <dl class="kv">
             {% for event in detail.events %}
-              <dt class="muted">{{ event.created_at|localtime }} &middot; {{ event.new_status|label }}</dt>
+              <dt>{{ event.created_at|localtime }}<br><span class="faint">{{ event.new_status|label }}</span></dt>
               <dd>{{ event.message or '' }}</dd>
             {% endfor %}
           </dl>
         {% else %}
-          <p class="muted mb0">No status changes recorded.</p>
+          <p class="muted">No status changes recorded.</p>
         {% endif %}
       </div>
-    </div>
+    </section>
 
     {% if detail.returns %}
-      <div class="card">
-        <header><h2>Returns</h2></header>
-        <div class="body">
-          {% for row in detail.returns %}
-            <div style="margin-bottom:8px">
-              <div class="mono">{{ row.return_number }}</div>
-              <div class="muted">{{ row.return_type|label }} &middot; {{ row.refund_amount|pkr }} &middot; {{ row.status|label }}</div>
-            </div>
-          {% endfor %}
+      <section class="panel">
+        <header class="panel-h"><h2>Returns</h2></header>
+        <div class="panel-b flush">
+          <div class="rows">
+            {% for row in detail.returns %}
+              <div class="row-item">
+                <span class="r-main mono">{{ row.return_number }}<div class="r-sub">{{ row.return_type|label }}</div></span>
+                <span class="r-val">{{ row.refund_amount|pkr }}</span>
+              </div>
+            {% endfor %}
+          </div>
         </div>
-      </div>
+      </section>
     {% endif %}
   </div>
 </div>

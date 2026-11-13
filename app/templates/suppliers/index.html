@@ -1,57 +1,57 @@
 {% extends "base.html" %}
-{% block title %}Suppliers &middot; Amna POS{% endblock %}
+{% from "_tabs.html" import tabs %}
+{% block title %}Suppliers{% endblock %}
+{% block section %}Stock / Purchasing{% endblock %}
+{% block heading %}Suppliers{% endblock %}
 {% block content_class %}wide{% endblock %}
 
-{% block content %}
-<div class="page-head">
-  <div>
-    <h1>Suppliers</h1>
-  </div>
-  <div class="page-actions">
-    {% if has_permission('inventory.purchase') %}
-      <a class="btn" href="{{ url_for('inventory.purchases') }}">Purchase orders</a>
-      <a class="btn primary" href="{{ url_for('suppliers.new') }}">Add supplier</a>
-    {% endif %}
-  </div>
-</div>
+{% block actions %}
+  {% if has_permission('inventory.purchase') %}
+    <a class="btn pri" href="{{ url_for('suppliers.new') }}">New supplier</a>
+  {% endif %}
+{% endblock %}
 
-<form class="toolbar" method="get" action="{{ url_for('suppliers.index') }}">
-  <div class="field search">
-    <label for="q">Search</label>
+{% block tabs %}
+  {{ tabs([
+    ('Purchase orders', url_for('inventory.purchases'), false),
+    ('Suppliers', url_for('suppliers.index'), true),
+  ]) }}
+{% endblock %}
+
+{% block content %}
+<form class="filters" method="get" action="{{ url_for('suppliers.index') }}">
+  <div class="grow">
+    <label class="sr-only" for="q">Search</label>
     <input type="search" id="q" name="q" value="{{ search }}" placeholder="Supplier name or city" autocomplete="off">
   </div>
-  <button class="btn primary" type="submit">Search</button>
-  {% if search %}<a class="btn ghost" href="{{ url_for('suppliers.index') }}">Clear</a>{% endif %}
+  <button class="btn pri" type="submit">Apply</button>
+  {% if search %}<a class="btn ghost" href="{{ url_for('suppliers.index') }}">Reset</a>{% endif %}
 </form>
 
-<div class="card">
-  <div class="body flush">
+<div class="panel">
+  <div class="panel-b flush">
     {% if suppliers %}
-      <div class="table-wrap">
-        <table>
+      <div class="tbl-wrap">
+        <table class="data">
           <thead>
             <tr>
-              <th>Supplier</th>
-              <th>City</th>
-              <th class="num">Lead time</th>
-              <th class="num">Purchase orders</th>
-              <th class="num">Ordered value</th>
-              <th></th>
+              <th>Supplier</th><th>City</th><th class="num">Lead time</th>
+              <th class="num">Orders</th><th class="num">Ordered value</th><th class="act"></th>
             </tr>
           </thead>
           <tbody>
             {% for supplier in suppliers %}
               {% set total = totals.get(supplier.id, {}) %}
               <tr>
-                <td><a href="{{ url_for('suppliers.detail', supplier_id=supplier.id) }}">{{ supplier.name }}</a></td>
+                <td><a class="rowlink" href="{{ url_for('suppliers.detail', supplier_id=supplier.id) }}">{{ supplier.name }}</a></td>
                 <td class="muted">{{ supplier.city }}</td>
                 <td class="num">{{ supplier.lead_time_days }} {{ 'day' if supplier.lead_time_days == 1 else 'days' }}</td>
                 <td class="num">{{ total.get('orders', 0) }}</td>
                 <td class="num">{{ total.get('value', 0)|pkr }}</td>
-                <td class="actions">
-                  <a class="btn ghost small" href="{{ url_for('suppliers.detail', supplier_id=supplier.id) }}">View</a>
+                <td class="act">
+                  <a class="btn ghost sm" href="{{ url_for('suppliers.detail', supplier_id=supplier.id) }}">Open</a>
                   {% if can_manage %}
-                    <a class="btn ghost small" href="{{ url_for('suppliers.edit', supplier_id=supplier.id) }}">Edit</a>
+                    <a class="btn ghost sm" href="{{ url_for('suppliers.edit', supplier_id=supplier.id) }}">Edit</a>
                   {% endif %}
                 </td>
               </tr>
@@ -60,10 +60,7 @@
         </table>
       </div>
     {% else %}
-      <div class="empty">
-        <strong>No suppliers{% if search %} match “{{ search }}”{% endif %}</strong>
-        {% if can_manage %}Add a supplier to raise purchase orders against it.{% endif %}
-      </div>
+      <div class="empty"><strong>No suppliers</strong></div>
     {% endif %}
   </div>
 </div>

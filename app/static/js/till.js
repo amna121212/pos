@@ -115,7 +115,7 @@
     }
     swap(payload.html);
     updateDue(payload);
-    var counter = document.querySelector('.card > header .hint');
+    var counter = document.querySelector('[data-line-count]');
     if (counter) {
       counter.textContent = payload.lines + (payload.lines === 1 ? ' line' : ' lines');
     }
@@ -168,7 +168,7 @@
   }
   (function initialiseDue() {
     var field = document.getElementById('amount_paid');
-    var total = document.querySelector('#cart-panel .totals .grand .num');
+    var total = document.querySelector('#cart-panel .bill-sum .due .num');
     if (field && total) {
       field.placeholder = 'Full total — ' + total.textContent.trim();
     }

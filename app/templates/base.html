@@ -13,173 +13,143 @@
 <body>
 {% from "_icons.html" import icon %}
 {% set ctx = current_context() %}
-<div class="layout">
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-text">
-        <strong>Amna POS</strong>
+{% set ep = request.endpoint or '' %}
+<div class="shell">
+
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('dashboard.index') }}">
+      <span class="brand-mark">A</span>
+      <span class="brand-text">
+        <b>Amna POS</b>
         <span>{% if ctx.business %}{{ ctx.business.name }}{% elif ctx.is_platform_admin %}Platform{% else %}Point of sale{% endif %}</span>
-      </div>
+      </span>
+    </a>
+
+    <span class="top-sep"></span>
+
+    {% if ctx.business and (ctx.can_switch_business or ctx.branches|length > 1) %}
+      {% set here = request.path ~ ('?' ~ request.query_string.decode('utf-8') if request.query_string else '') %}
+      <form method="post" action="{{ url_for('auth.switch_context') }}" class="ctx" data-context-form>
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ here }}">
+        {% if ctx.can_switch_business %}
+          <label class="sr-only" for="business-select">Restaurant</label>
+          <select id="business-select" name="business_id">
+            {% for business in ctx.businesses %}
+              <option value="{{ business.id }}" {{ 'selected' if business.id == ctx.business_id }}>{{ business.name }}</option>
+            {% endfor %}
+          </select>
+        {% endif %}
+        {% if ctx.branches|length > 1 or ctx.can_switch_business %}
+          <label class="sr-only" for="branch-select">Branch</label>
+          <select id="branch-select" name="branch_id">
+            {% for branch in ctx.branches %}
+              <option value="{{ branch.id }}" {{ 'selected' if branch.id == ctx.branch_id }}>{{ branch.code }} · {{ branch.name }}</option>
+            {% endfor %}
+          </select>
+        {% endif %}
+        <button class="btn sm pri" type="submit" id="context-apply">Apply</button>
+      </form>
+    {% elif ctx.business %}
+      <span class="role-tag">{{ ctx.branch.code if ctx.branch }} · {{ ctx.branch.name if ctx.branch }}</span>
+    {% endif %}
+
+    <span class="top-gap"></span>
+
+    {% if ctx.is_platform_admin %}
+      <span class="role-tag">Super admin</span>
+    {% elif ctx.role %}
+      <span class="role-tag">{{ ctx.role|label }}</span>
+    {% endif %}
+
+    <div class="who">
+      <span class="av">{{ ctx.user.display_name|initials }}</span>
+      <span class="who-text">
+        <b>{{ ctx.user.display_name }}</b>
+        <span>{{ ctx.user.email }}</span>
+      </span>
     </div>
 
-    <nav class="nav">
-      {% set ep = request.endpoint or '' %}
-      <div class="nav-group">Operations</div>
-      <a href="{{ url_for('dashboard.index') }}" class="{{ 'active' if ep == 'dashboard.index' }}">{{ icon('grid') }}<span>Dashboard</span></a>
+    <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline-flex;margin:0">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button class="btn ghost sm" type="submit">Sign out</button>
+    </form>
+  </header>
+
+  <div class="body-row">
+    <aside class="side">
+      <div class="side-group">Sales</div>
+      <a class="item {{ 'on' if ep == 'dashboard.index' }}" href="{{ url_for('dashboard.index') }}">{{ icon('grid') }}<span>Overview</span></a>
       {% if has_permission('order.create') %}
-        <a href="{{ url_for('pos.index') }}" class="{{ 'active' if request.blueprint == 'pos' }}">{{ icon('cart') }}<span>Till</span></a>
+        <a class="item {{ 'on' if request.blueprint == 'pos' }}" href="{{ url_for('pos.index') }}">{{ icon('cart') }}<span>Billing</span></a>
       {% endif %}
-      <a href="{{ url_for('orders.index') }}" class="{{ 'active' if request.blueprint == 'orders' and ep != 'orders.returns' }}">{{ icon('receipt') }}<span>Orders</span></a>
-      <a href="{{ url_for('kitchen.index') }}" class="{{ 'active' if request.blueprint == 'kitchen' }}">{{ icon('flame') }}<span>Kitchen</span></a>
-      {% if has_permission('order.refund') %}
-        <a href="{{ url_for('orders.returns') }}" class="{{ 'active' if ep == 'orders.returns' }}">{{ icon('tag') }}<span>Refunds</span></a>
-      {% endif %}
+      <a class="item {{ 'on' if request.blueprint in ('orders','kitchen') }}" href="{{ url_for('orders.index') }}">{{ icon('receipt') }}<span>Orders</span></a>
 
-      <div class="nav-group">Catalogue</div>
-      <a href="{{ url_for('catalog.products') }}" class="{{ 'active' if ep in ('catalog.products','catalog.product_new','catalog.product_edit') }}">{{ icon('tag') }}<span>Products</span></a>
-      <a href="{{ url_for('catalog.categories') }}" class="{{ 'active' if ep == 'catalog.categories' }}">{{ icon('grid') }}<span>Categories</span></a>
+      <div class="side-group">Catalogue</div>
+      <a class="item {{ 'on' if ep in ('catalog.products','catalog.product_new','catalog.product_edit','catalog.categories') }}" href="{{ url_for('catalog.products') }}">{{ icon('tag') }}<span>Menu</span></a>
 
+      <div class="side-group">Stock</div>
       {% if has_permission('inventory.adjust') or has_permission('inventory.purchase') or has_permission('inventory.transfer') %}
-        <div class="nav-group">Stock</div>
-        <a href="{{ url_for('inventory.index') }}" class="{{ 'active' if ep in ('inventory.index','inventory.adjust','inventory.movements') }}">{{ icon('box') }}<span>Inventory</span></a>
-        <a href="{{ url_for('inventory.ingredients') }}" class="{{ 'active' if ep == 'inventory.ingredients' }}">{{ icon('box') }}<span>Ingredients</span></a>
-        <a href="{{ url_for('inventory.recipes') }}" class="{{ 'active' if ep == 'inventory.recipes' }}">{{ icon('receipt') }}<span>Recipes</span></a>
+        <a class="item {{ 'on' if request.blueprint == 'inventory' and ep not in ('inventory.purchases','inventory.purchase_new') }}" href="{{ url_for('inventory.index') }}">{{ icon('box') }}<span>Inventory</span></a>
         {% if has_permission('inventory.purchase') %}
-          <a href="{{ url_for('inventory.purchases') }}" class="{{ 'active' if ep in ('inventory.purchases','inventory.purchase_new') }}">{{ icon('cart') }}<span>Purchasing</span></a>
+          <a class="item {{ 'on' if ep in ('inventory.purchases','inventory.purchase_new','suppliers.index','suppliers.detail','suppliers.new','suppliers.edit') }}" href="{{ url_for('inventory.purchases') }}">{{ icon('truck') }}<span>Purchasing</span></a>
         {% endif %}
-        {% if has_permission('inventory.transfer') %}
-          <a href="{{ url_for('inventory.transfers') }}" class="{{ 'active' if ep in ('inventory.transfers','inventory.transfer_new') }}">{{ icon('truck') }}<span>Transfers</span></a>
-        {% endif %}
-        <a href="{{ url_for('suppliers.index') }}" class="{{ 'active' if request.blueprint == 'suppliers' }}">{{ icon('truck') }}<span>Suppliers</span></a>
       {% endif %}
 
-      {% if has_permission('report.view') or has_permission('staff.manage') or has_permission('branch.manage') or has_permission('business.settings') %}
-        <div class="nav-group">Business</div>
-        {% if has_permission('report.view') %}
-          <a href="{{ url_for('reports.index') }}" class="{{ 'active' if request.blueprint == 'reports' }}">{{ icon('chart') }}<span>Reports</span></a>
-        {% endif %}
-        {% if has_permission('ai.view') %}
-          <a href="{{ url_for('insights.index') }}" class="{{ 'active' if request.blueprint == 'insights' }}">{{ icon('chart') }}<span>Insights</span></a>
-        {% endif %}
-        <a href="{{ url_for('restaurants.index') }}" class="{{ 'active' if request.blueprint == 'restaurants' }}">{{ icon('store') }}<span>Restaurants</span></a>
-        {% if has_permission('branch.manage') %}
-          <a href="{{ url_for('admin.branches') }}" class="{{ 'active' if ep == 'admin.branches' }}">{{ icon('store') }}<span>Branches</span></a>
-        {% endif %}
-        {% if has_permission('staff.manage') %}
-          <a href="{{ url_for('admin.staff') }}" class="{{ 'active' if ep == 'admin.staff' }}">{{ icon('users') }}<span>Employees</span></a>
-        {% endif %}
-        {% if has_permission('shift.manage') or has_permission('staff.manage') %}
-          <a href="{{ url_for('admin.shifts') }}" class="{{ 'active' if ep == 'admin.shifts' }}">{{ icon('clock') }}<span>Shifts</span></a>
-        {% endif %}
-        {% if has_permission('staff.manage') or has_permission('business.settings') %}
-          <a href="{{ url_for('admin.audit') }}" class="{{ 'active' if ep == 'admin.audit' }}">{{ icon('shield') }}<span>Audit log</span></a>
-        {% endif %}
-        {% if has_permission('business.settings') %}
-          <a href="{{ url_for('admin.payment_methods') }}" class="{{ 'active' if ep == 'admin.payment_methods' }}">{{ icon('cart') }}<span>Payment methods</span></a>
-        {% endif %}
-        {% if has_permission('business.settings') or has_permission('branch.manage') %}
-          <a href="{{ url_for('admin.settings') }}" class="{{ 'active' if ep == 'admin.settings' }}">{{ icon('gear') }}<span>Settings</span></a>
-        {% endif %}
+      <div class="side-group">Business</div>
+      <a class="item {{ 'on' if ep in ('admin.branches','admin.branch_new','restaurants.index','restaurants.detail') }}" href="{{ url_for('admin.branches') }}">{{ icon('store') }}<span>Branches</span></a>
+      {% if has_permission('report.view') %}
+        <a class="item {{ 'on' if request.blueprint in ('reports','insights') }}" href="{{ url_for('reports.index') }}">{{ icon('chart') }}<span>Reports</span></a>
+      {% endif %}
+      {% if has_permission('staff.manage') %}
+        <a class="item {{ 'on' if ep in ('admin.staff','admin.staff_new','admin.staff_edit') }}" href="{{ url_for('admin.staff') }}">{{ icon('users') }}<span>Staff</span></a>
+      {% endif %}
+      {% if has_permission('business.settings') or has_permission('branch.manage') or has_permission('shift.manage') %}
+        <a class="item {{ 'on' if ep in ('admin.settings','admin.payment_methods','admin.shifts','admin.shift_open','admin.audit') }}" href="{{ url_for('admin.settings') }}">{{ icon('gear') }}<span>Settings</span></a>
       {% endif %}
 
       {% if ctx.is_platform_admin %}
-        <div class="nav-group">Platform</div>
-        <a href="{{ url_for('platform.index') }}" class="{{ 'active' if ep == 'platform.index' }}">{{ icon('grid') }}<span>Businesses</span></a>
-        <a href="{{ url_for('platform.integrity') }}" class="{{ 'active' if ep == 'platform.integrity' }}">{{ icon('shield') }}<span>Data integrity</span></a>
+        <div class="side-group">Platform</div>
+        <a class="item {{ 'on' if ep == 'platform.index' }}" href="{{ url_for('platform.index') }}">{{ icon('grid') }}<span>Businesses</span></a>
+        <a class="item {{ 'on' if ep == 'platform.integrity' }}" href="{{ url_for('platform.integrity') }}">{{ icon('shield') }}<span>Integrity</span></a>
       {% endif %}
-    </nav>
+    </aside>
 
-  </aside>
-  <div class="main">
-    <div class="topbar">
-      {% if ctx.business %}
-        {# Choose a restaurant, then a branch, then Apply. Nothing submits early,
-           and the switch returns to this page with its query string intact. #}
-        {% set here = request.path ~ ('?' ~ request.query_string.decode('utf-8') if request.query_string else '') %}
-        {% set pick_business = ctx.can_switch_business %}
-        {% set pick_branch = ctx.branches|length > 1 or pick_business %}
-        <div class="branch-picker">
-          {% if pick_business or ctx.branches|length > 1 %}
-            <form method="post" action="{{ url_for('auth.switch_context') }}"
-                  class="context-form inline-form" data-context-form>
-              <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-              <input type="hidden" name="next" value="{{ here }}">
-              {% if pick_business %}
-                <label class="sr-only" for="business-select">Restaurant</label>
-                <select id="business-select" name="business_id" title="Restaurant">
-                  {% for business in ctx.businesses %}
-                    <option value="{{ business.id }}" {{ 'selected' if business.id == ctx.business_id }}>{{ business.name }}</option>
-                  {% endfor %}
-                </select>
-              {% endif %}
-              {% if pick_branch %}
-                <label class="sr-only" for="branch-select">Branch</label>
-                <select id="branch-select" name="branch_id" title="Branch">
-                  {% for branch in ctx.branches %}
-                    <option value="{{ branch.id }}" {{ 'selected' if branch.id == ctx.branch_id }}>{{ branch.code }} &middot; {{ branch.name }}</option>
-                  {% endfor %}
-                </select>
-              {% endif %}
-              <button class="btn small primary" type="submit" id="context-apply">Apply</button>
-            </form>
-          {% else %}
-            <span class="where nowrap">
-              <b>{{ ctx.business.name }}</b>
-              {% if ctx.branch %} &middot; {{ ctx.branch.code }} {{ ctx.branch.name }}{% endif %}
-            </span>
-          {% endif %}
+    <main class="main">
+      <div class="pagebar">
+        <div>
+          <div class="crumb">{% block section %}Amna POS{% endblock %}</div>
+          <h1>{% block heading %}{% endblock %}</h1>
+          {% block page_sub %}{% endblock %}
         </div>
-        <span class="where">
-          {% if ctx.is_platform_admin %}
-            <span class="badge info">Super admin</span>
-          {% elif ctx.role %}
-            {{ ctx.role|label }}
-          {% endif %}
-        </span>
-      {% else %}
-        <span class="where">Platform administration</span>
-      {% endif %}
-
-      <span class="spacer"></span>
-
-      {% if ctx.business and ctx.branch %}
-        <span class="where nowrap">{{ ctx.branch.area }}</span>
-      {% endif %}
-      <div class="user-chip">
-        <div class="avatar">{{ ctx.user.display_name|initials }}</div>
-        <div class="who">
-          <b>{{ ctx.user.display_name }}</b>
-          <span>{{ ctx.user.email }}</span>
-        </div>
+        <div class="actions">{% block actions %}{% endblock %}</div>
       </div>
-      <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form">
-        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-        <button class="btn ghost small" type="submit">Sign out</button>
-      </form>
-    </div>
-    <main class="content {% block content_class %}{% endblock %}">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="flashes" role="status">
-            {% for category, message in messages %}
-              <div class="flash {{ category }}">
-                <span>{{ message }}</span>
-                <button type="button" data-dismiss aria-label="Dismiss">&times;</button>
-              </div>
-            {% endfor %}
-          </div>
-        {% endif %}
-      {% endwith %}
 
-      {% block content %}{% endblock %}
+      {% block tabs %}{% endblock %}
+
+      <div class="content {% block content_class %}{% endblock %}">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flashes" role="status">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}">
+                  <span>{{ message }}</span>
+                  <button type="button" data-dismiss aria-label="Dismiss">&times;</button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </div>
     </main>
   </div>
 </div>
 
 <script id="context-branches" type="application/json">{{ branch_options()|tojson }}</script>
 <script>
-  // The context picker is a draft form: the restaurant select only refills the
-  // branch select, and nothing changes on the server until Apply is pressed.
+  // Restaurant select refills the branch list; nothing is saved until Apply.
   (function () {
     var mapEl = document.getElementById('context-branches');
     var map = [];
@@ -191,32 +161,21 @@
         .replace(/"/g, '&quot;');
     }
 
-    function branchesFor(businessId) {
-      for (var i = 0; i < map.length; i += 1) {
-        if (String(map[i].id) === String(businessId)) { return map[i].branches || []; }
-      }
-      return [];
-    }
-
     var businessSelect = document.getElementById('business-select');
     var branchSelect = document.getElementById('branch-select');
     var applyButton = document.getElementById('context-apply');
 
-    function fillBranches(businessId, selected) {
-      if (!branchSelect) { return; }
-      var rows = branchesFor(businessId);
-      branchSelect.innerHTML = rows.map(function (branch) {
-        return '<option value="' + branch.id + '">' + esc(branch.code) + ' &middot; ' + esc(branch.name) + '</option>';
-      }).join('');
-      if (selected) { branchSelect.value = String(selected); }
-      branchSelect.disabled = rows.length < 2;
-      if (applyButton) { applyButton.disabled = rows.length === 0; }
-    }
-
     if (businessSelect && branchSelect) {
       businessSelect.addEventListener('change', function () {
-        // A new restaurant means a new set of branches; start at its first one.
-        fillBranches(businessSelect.value, null);
+        var rows = [];
+        for (var i = 0; i < map.length; i += 1) {
+          if (String(map[i].id) === String(businessSelect.value)) { rows = map[i].branches || []; }
+        }
+        branchSelect.innerHTML = rows.map(function (branch) {
+          return '<option value="' + branch.id + '">' + esc(branch.code) + ' · ' + esc(branch.name) + '</option>';
+        }).join('');
+        branchSelect.disabled = rows.length < 2;
+        if (applyButton) { applyButton.disabled = rows.length === 0; }
       });
     }
 

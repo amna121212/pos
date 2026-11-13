@@ -1,0 +1,8 @@
+{# Shared workspace tab bar. Pass a list of (label, url, is_active) tuples. #}
+{% macro tabs(items) -%}
+<nav class="tabs">
+  {% for label, url, active in items %}
+    <a class="{% if active %}on{% endif %}" href="{{ url }}">{{ label }}</a>
+  {% endfor %}
+</nav>
+{%- endmacro %}

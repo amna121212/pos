@@ -1,50 +1,54 @@
 {% extends "base.html" %}
-{% block title %}Stock &middot; Amna POS{% endblock %}
+{% from "_tabs.html" import tabs %}
+{% block title %}Inventory{% endblock %}
+{% block section %}Stock{% endblock %}
+{% block heading %}Stock{% endblock %}
 {% block content_class %}wide{% endblock %}
 
-{% block content %}
-{% set ctx = current_context() %}
-<div class="page-head">
-  <div>
-    <h1>Stock</h1>
-  </div>
-  <div class="page-actions">
-    <a class="btn" href="{{ url_for('inventory.movements') }}">Movements</a>
-    {% if has_permission('inventory.adjust') %}
-      <a class="btn primary" href="{{ url_for('inventory.adjust') }}">Adjust stock</a>
-    {% endif %}
-  </div>
-</div>
+{% block page_sub %}
+  <div class="sub">{{ total }} items · {{ ctx.branch.code }}</div>
+{% endblock %}
 
-<form class="toolbar" method="get" action="{{ url_for('inventory.index') }}">
-  <div class="field search">
-    <label for="q">Search</label>
-    <input type="search" id="q" name="q" value="{{ search }}" placeholder="Item name or SKU">
+{% block actions %}
+  {% if has_permission('inventory.adjust') %}
+    <a class="btn pri" href="{{ url_for('inventory.adjust') }}">Adjust stock</a>
+  {% endif %}
+{% endblock %}
+
+{% block tabs %}
+  {{ tabs([
+    ('Stock', url_for('inventory.index'), true),
+    ('Ingredients', url_for('inventory.ingredients'), false),
+    ('Recipes', url_for('inventory.recipes'), false),
+    ('Movements', url_for('inventory.movements'), false),
+    ('Adjust', url_for('inventory.adjust'), false),
+    ('Transfers', url_for('inventory.transfers'), false),
+  ]) }}
+{% endblock %}
+
+{% block content %}
+<form class="filters" method="get" action="{{ url_for('inventory.index') }}">
+  <div class="grow">
+    <label class="sr-only" for="q">Search</label>
+    <input type="search" id="q" name="q" value="{{ search }}" placeholder="Item name or SKU" autocomplete="off">
   </div>
-  <div class="field">
-    <label class="check" style="margin-top:22px">
-      <input type="checkbox" name="low" value="1" {{ 'checked' if low_only }}>
-      <span>Below reorder level only</span>
-    </label>
-  </div>
-  <button class="btn primary" type="submit">Filter</button>
+  <label class="check">
+    <input type="checkbox" name="low" value="1" {{ 'checked' if low_only }}>
+    <span>Below reorder level</span>
+  </label>
+  <button class="btn pri" type="submit">Apply</button>
   <a class="btn ghost" href="{{ url_for('inventory.index') }}">Reset</a>
 </form>
 
-<div class="card">
-  <div class="body flush">
+<div class="panel">
+  <div class="panel-b flush">
     {% if rows %}
-      <div class="table-wrap">
-        <table>
+      <div class="tbl-wrap">
+        <table class="data">
           <thead>
             <tr>
-              <th>SKU</th>
-              <th>Item</th>
-              <th class="num">On hand</th>
-              <th>Unit</th>
-              <th class="num">Reorder level</th>
-              <th class="num">Standard cost</th>
-              <th>Status</th>
+              <th>SKU</th><th>Item</th><th class="num">On hand</th><th>Unit</th>
+              <th class="num">Reorder at</th><th class="num">Cost</th><th>Status</th>
             </tr>
           </thead>
           <tbody>
@@ -72,13 +76,13 @@
         <div class="pager">
           <span>Page {{ page }} of {{ pages }}</span>
           <span class="links">
-            {% if page > 1 %}<a class="btn small" href="{{ url_for('inventory.index', page=page-1, q=search, low='1' if low_only else '') }}">Previous</a>{% endif %}
-            {% if page < pages %}<a class="btn small" href="{{ url_for('inventory.index', page=page+1, q=search, low='1' if low_only else '') }}">Next</a>{% endif %}
+            {% if page > 1 %}<a class="btn sm" href="{{ url_for('inventory.index', page=page-1, q=search, low='1' if low_only else '') }}">Previous</a>{% endif %}
+            {% if page < pages %}<a class="btn sm" href="{{ url_for('inventory.index', page=page+1, q=search, low='1' if low_only else '') }}">Next</a>{% endif %}
           </span>
         </div>
       {% endif %}
     {% else %}
-      <div class="empty"><strong>No stock records</strong>No items match this filter at the branch.</div>
+      <div class="empty"><strong>No stock records</strong></div>
     {% endif %}
   </div>
 </div>

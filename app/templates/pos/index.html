@@ -1,171 +1,158 @@
 {% extends "base.html" %}
-{% block title %}Till &middot; Amna POS{% endblock %}
+{% block title %}Billing{% endblock %}
+{% block section %}Sales{% endblock %}
+{% block heading %}Billing{% endblock %}
 {% block content_class %}wide{% endblock %}
 
-{% block content %}
-{% set ctx = current_context() %}
-<div class="page-head">
-  <div>
-    <h1>Till</h1>
-  </div>
-  <div class="page-actions">
-    <a class="btn" href="{{ url_for('orders.index', status='held') }}">Held bills</a>
-    <form method="post" action="{{ url_for('pos.clear') }}" data-cart-form="1" class="inline-form">
-      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-      <button class="btn" type="submit">Empty basket</button>
-    </form>
-  </div>
-</div>
+{% block actions %}
+  <a class="btn" href="{{ url_for('orders.index', status='held') }}">Held bills</a>
+  <form method="post" action="{{ url_for('pos.clear') }}" data-cart-form="1" style="display:inline-flex;margin:0">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button class="btn" type="submit">Empty basket</button>
+  </form>
+{% endblock %}
 
+{% block content %}
 {% if cart_error %}
   <div class="flashes"><div class="flash warn"><span>{{ cart_error }}</span></div></div>
 {% endif %}
 
-<div class="till">
-  <div class="pos-left">
-    <form class="toolbar" method="get" action="{{ url_for('pos.index') }}">
+<div class="pos">
+  <aside class="pos-cats">
+    <a class="{{ 'on' if not category_id }}" href="{{ url_for('pos.index', q=search or None) }}">All items</a>
+    {% for category in categories %}
+      <a class="{{ 'on' if category.id == category_id }}"
+         href="{{ url_for('pos.index', category=category.id, q=search or None) }}">{{ category.name }}</a>
+    {% endfor %}
+  </aside>
+
+  <div class="pos-middle">
+    <form class="filters" method="get" action="{{ url_for('pos.index') }}">
       <input type="hidden" name="category" value="{{ category_id or '' }}">
-      <div class="field search">
-        <label class="sr-only" for="q">Search products</label>
-        <input type="search" id="q" name="q" value="{{ search }}" placeholder="Search name or SKU" autocomplete="off">
+      <div class="grow">
+        <input type="search" id="q" name="q" value="{{ search }}" placeholder="Search item or SKU" autocomplete="off">
       </div>
       <button class="btn" type="submit">Search</button>
-      <div class="field wide">
-        <label class="sr-only" for="scan">Barcode</label>
+      <div class="w140">
         <input type="text" id="scan" name="scan" class="scan-input" placeholder="Scan barcode" autocomplete="off">
       </div>
     </form>
 
-    <div class="chips">
-      <a class="chip {{ 'is-active' if not category_id }}"
-         href="{{ url_for('pos.index', q=search or None) }}">All</a>
-      {% for category in categories %}
-        <a class="chip {{ 'is-active' if category.id == category_id }}"
-           href="{{ url_for('pos.index', category=category.id, q=search or None) }}">{{ category.name }}</a>
-      {% endfor %}
-    </div>
-
-    {% if products %}
-      <div class="product-grid">
-        {% for item in products %}
-          {% set product = item.product %}
-          {% set branch_product = item.branch_product %}
-          {% if product.id in choices %}
-            <a class="product-card" href="{{ url_for('pos.configure', product_id=product.id) }}">
-              <span class="name">{{ product.name }}</span>
-              <span class="meta">
-                <span class="price">{{ branch_product.sale_price|pkr }}</span>
-                <span class="flag">Options</span>
-              </span>
-            </a>
-          {% else %}
-            <form method="post" action="{{ url_for('pos.add') }}" data-cart-form="1">
-              <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-              <input type="hidden" name="product_id" value="{{ product.id }}">
-              <input type="hidden" name="qty" value="1">
-              <button class="product-card block" type="submit">
-                <span class="name">{{ product.name }}</span>
-                <span class="meta">
-                  <span class="price">{{ branch_product.sale_price|pkr }}</span>
-                  <span class="faint mono" style="font-size:10.5px">{{ product.sku }}</span>
-                </span>
-              </button>
-            </form>
-          {% endif %}
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="card">
-        <div class="empty">
-          {% if search or category_id %}
-            <strong>No products match</strong>
+    <div class="panel">
+      <div class="panel-b" style="padding:8px">
+        {% if products %}
+          <div class="pos-grid">
+            {% for item in products %}
+              {% set product = item.product %}
+              {% set branch_product = item.branch_product %}
+              {% if product.id in choices %}
+                <a class="pos-item" href="{{ url_for('pos.configure', product_id=product.id) }}">
+                  <span class="nm">{{ product.name }}</span>
+                  <span class="ft">
+                    <span class="pr">{{ branch_product.sale_price|pkr }}</span>
+                    <span class="op">Options</span>
+                  </span>
+                </a>
+              {% else %}
+                <form method="post" action="{{ url_for('pos.add') }}" data-cart-form="1">
+                  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                  <input type="hidden" name="product_id" value="{{ product.id }}">
+                  <input type="hidden" name="qty" value="1">
+                  <button class="pos-item" type="submit">
+                    <span class="nm">{{ product.name }}</span>
+                    <span class="ft">
+                      <span class="pr">{{ branch_product.sale_price|pkr }}</span>
+                      <span class="sk">{{ product.sku }}</span>
+                    </span>
+                  </button>
+                </form>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty">
+            <strong>No items found</strong>
             <a href="{{ url_for('pos.index') }}">Clear filters</a>
-          {% else %}
-            <strong>No products at this branch</strong>
-            {% if can('menu.manage') %}
-              <a href="{{ url_for('catalog.products') }}">Products</a>
-            {% endif %}
-          {% endif %}
-        </div>
+          </div>
+        {% endif %}
       </div>
-    {% endif %}
+    </div>
   </div>
 
-  <div class="cart-panel">
-    <div class="card">
-      <header>
-        <h2>Current bill</h2>
-        <span class="hint">{{ cart.lines|length }} {{ 'line' if cart.lines|length == 1 else 'lines' }}</span>
-      </header>
-      <div id="cart-panel">
-        {% include "pos/_cart.html" %}
-      </div>
+  <section class="pos-bill">
+    <header class="panel-h">
+      <h2>Current bill</h2>
+      <span class="meta" data-line-count>{{ cart.lines|length }} {{ 'line' if cart.lines|length == 1 else 'lines' }}</span>
+    </header>
 
-      <form method="post" action="{{ url_for('pos.checkout') }}" class="checkout" id="checkout-form">
-        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div id="cart-panel">
+      {% include "pos/_cart.html" %}
+    </div>
 
-        <div class="form-grid">
-          <div class="form-row">
-            <label for="order_type">Type</label>
-            <select id="order_type" name="order_type">
-              <option value="dine_in">Dine in</option>
-              <option value="takeaway">Takeaway</option>
-              <option value="counter_pickup">Counter pickup</option>
-            </select>
-          </div>
-          <div class="form-row" id="table-row">
-            <label for="table_id">Table</label>
-            <select id="table_id" name="table_id">
-              <option value="">Not seated</option>
-              {% for table in tables %}
-                <option value="{{ table.id }}">{{ table.table_number }} &middot; {{ table.capacity }} seats</option>
-              {% endfor %}
-            </select>
-          </div>
+    <form method="post" action="{{ url_for('pos.checkout') }}" class="bill-pay" id="checkout-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+
+      <div class="grid-form">
+        <div class="field">
+          <label for="order_type">Type</label>
+          <select id="order_type" name="order_type">
+            <option value="dine_in">Dine in</option>
+            <option value="takeaway">Takeaway</option>
+            <option value="counter_pickup">Counter pickup</option>
+          </select>
         </div>
-
-        {% if may_discount %}
-          <div class="form-grid">
-            <div class="form-row">
-              <label for="discount_kind">Discount</label>
-              <select id="discount_kind" name="discount_kind">
-                <option value="percent">Percent</option>
-                <option value="fixed">Rupees</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <label for="discount_value">Value</label>
-              <input type="number" step="0.01" min="0" id="discount_value" name="discount_value" placeholder="0">
-            </div>
-          </div>
-          <div class="field-error" id="discount-error" hidden></div>
-        {% endif %}
-
-        <div class="form-row">
-          <label for="payment_method_id">Payment</label>
-          <select id="payment_method_id" name="payment_method_id">
-            <option value="">Pay later</option>
-            {% for method in payment_methods %}
-              <option value="{{ method.id }}">{{ method.label }}</option>
+        <div class="field" id="table-row">
+          <label for="table_id">Table</label>
+          <select id="table_id" name="table_id">
+            <option value="">Not seated</option>
+            {% for table in tables %}
+              <option value="{{ table.id }}">{{ table.table_number }}</option>
             {% endfor %}
           </select>
         </div>
+      </div>
 
-        <div class="form-grid">
-          <div class="form-row">
-            <label for="amount_paid">Received</label>
-            <input type="number" step="0.01" min="0" id="amount_paid" name="amount_paid" placeholder="Full total">
+      {% if may_discount %}
+        <div class="grid-form">
+          <div class="field">
+            <label for="discount_kind">Discount</label>
+            <select id="discount_kind" name="discount_kind">
+              <option value="percent">Percent</option>
+              <option value="fixed">Rupees</option>
+            </select>
           </div>
-          <div class="form-row">
-            <label for="note">Note</label>
-            <input type="text" id="note" name="note" maxlength="150" placeholder="Optional">
+          <div class="field">
+            <label for="discount_value">Value</label>
+            <input type="number" step="0.01" min="0" id="discount_value" name="discount_value" placeholder="0">
           </div>
         </div>
+        <div class="field-error" id="discount-error" hidden></div>
+      {% endif %}
 
-        <button class="btn primary block btn-lg" type="submit" id="pay-button">Take payment</button>
-      </form>
-    </div>
-  </div>
+      <div class="field">
+        <label for="payment_method_id">Payment</label>
+        <select id="payment_method_id" name="payment_method_id">
+          <option value="">Pay later</option>
+          {% for method in payment_methods %}
+            <option value="{{ method.id }}">{{ method.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="grid-form">
+        <div class="field">
+          <label for="amount_paid">Received</label>
+          <input type="number" step="0.01" min="0" id="amount_paid" name="amount_paid" placeholder="Full total">
+        </div>
+        <div class="field">
+          <label for="note">Note</label>
+          <input type="text" id="note" name="note" maxlength="150" placeholder="Optional">
+        </div>
+      </div>
+
+      <button class="btn pri block lg" type="submit" id="pay-button">Take payment</button>
+    </form>
+  </section>
 </div>
 {% endblock %}
 

@@ -3,50 +3,53 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sign in &middot; Amna POS</title>
+  <title>Sign in · Amna POS</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
 </head>
 <body>
-<div class="auth-wrap">
-  <form class="auth-card" method="post" action="{{ url_for('auth.login') }}" novalidate>
-    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-    <div class="auth-brand">
-      <span class="auth-mark">A</span>
+<div class="auth">
+  <div class="auth-box">
+    <div class="head">
+      <span class="brand-mark">A</span>
       <h1>Amna POS</h1>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="flashes">
-          {% for category, message in messages %}
-            <div class="flash {{ category }}"><span>{{ message }}</span></div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
+    <form method="post" action="{{ url_for('auth.login') }}" novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
 
-    <div class="form-row">
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" value="{{ email }}" autocomplete="username" required autofocus>
-    </div>
-    <div class="form-row">
-      <label for="password">Password</label>
-      <input type="password" id="password" name="password" autocomplete="current-password" required>
-    </div>
-    <button class="btn primary block" type="submit">Sign in</button>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flashes">
+            {% for category, message in messages %}
+              <div class="flash {{ category }}"><span>{{ message }}</span></div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
 
-    <div class="auth-foot">
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" value="{{ email }}" autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn pri block" type="submit">Sign in</button>
+    </form>
+
+    <div class="foot">
       {% if config.SIGNUP_ENABLED %}
-        New business? <a href="{{ url_for('auth.signup') }}">Create an account</a>
+        <a href="{{ url_for('auth.signup') }}">Create account</a>
       {% else %}
         Accounts are created by the administrator
       {% endif %}
     </div>
-  </form>
+  </div>
 </div>
 </body>
 </html>

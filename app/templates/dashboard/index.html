@@ -1,104 +1,71 @@
 {% extends "base.html" %}
-{% block title %}Dashboard &middot; Amna POS{% endblock %}
+{% block title %}Overview{% endblock %}
+{% block section %}Sales{% endblock %}
+{% block heading %}Overview{% endblock %}
+
+{% block page_sub %}
+  <div class="sub">{{ today.strftime('%a, %d %b %Y') }} · {{ scope_label }}</div>
+{% endblock %}
+
+{% block actions %}
+  {% if has_permission('order.create') %}
+    <a class="btn pri" href="{{ url_for('pos.index') }}">New sale</a>
+  {% endif %}
+  <a class="btn" href="{{ url_for('reports.index', **{'from': today_iso, 'to': today_iso}) }}">Reports</a>
+{% endblock %}
 
 {% block content %}
-{% set ctx = current_context() %}
 {% set today_iso = today.strftime('%Y-%m-%d') %}
 {% set scope_label = 'All branches' if ctx.branches|length > 1 else (ctx.branch.name if ctx.branch) %}
-
-<div class="page-head">
-  <div>
-    <h1>Dashboard</h1>
-    <div class="sub">{{ today.strftime('%A, %d %B %Y') }} &middot; {{ scope_label }}</div>
-  </div>
-  <div class="page-actions">
-    {% if has_permission('order.create') %}
-      <a class="btn primary" href="{{ url_for('pos.index') }}">New sale</a>
-    {% endif %}
-    <a class="btn" href="{{ url_for('reports.index', **{'from': today_iso, 'to': today_iso}) }}">Reports</a>
-  </div>
-</div>
-
-{% set report_today = {'from': today_iso, 'to': today_iso} %}
-
-<div class="stats">
-  <a class="stat stat-link" href="{{ url_for('reports.index', **report_today) }}">
-    <div class="k">Net sales today</div>
+<div class="figs">
+  <div class="fig">
+    <div class="l">Net sales</div>
     <div class="v">{{ summary.net_sales|pkr }}</div>
-    <div class="n">{{ summary.orders }} paid {{ 'order' if summary.orders == 1 else 'orders' }}</div>
-  </a>
-  <a class="stat stat-link" href="{{ url_for('orders.index', status='paid') }}">
-    <div class="k">Completed orders</div>
-    <div class="v">{{ summary.completed_orders }}</div>
-    <div class="n">Paid in full today</div>
-  </a>
-  <a class="stat stat-link" href="{{ url_for('reports.index', **report_today) }}">
-    <div class="k">Average order</div>
+    <div class="n">{{ summary.orders }} paid orders</div>
+  </div>
+  <div class="fig">
+    <div class="l">Average order</div>
     <div class="v">{{ summary.average_order_value|pkr }}</div>
-    <div class="n">Net of tax</div>
-  </a>
-  <a class="stat stat-link" href="{{ url_for('orders.index', status='held') }}">
-    <div class="k">Active orders</div>
+    <div class="n">net of tax</div>
+  </div>
+  <div class="fig">
+    <div class="l">Tax</div>
+    <div class="v">{{ summary.tax|pkr }}</div>
+    <div class="n">collected today</div>
+  </div>
+  <div class="fig">
+    <div class="l">Open orders</div>
     <div class="v">{{ summary.active_orders }}</div>
-    <div class="n">Open, held or part paid</div>
-  </a>
-  <a class="stat stat-link" href="{{ url_for('orders.index', status='cancelled') }}">
-    <div class="k">Cancelled today</div>
-    <div class="v">{{ summary.cancelled_orders }}</div>
-    <div class="n">{{ summary.tax|pkr }} tax collected</div>
-  </a>
-  <a class="stat stat-link" href="{{ url_for('kitchen.index') }}">
-    <div class="k">Kitchen queue</div>
+    <div class="n">{{ summary.completed_orders }} completed</div>
+  </div>
+  <div class="fig">
+    <div class="l">Kitchen queue</div>
     <div class="v">{{ kitchen_queue }}</div>
-    <div class="n">Tickets open or cooking</div>
-  </a>
+    <div class="n">{{ summary.cancelled_orders }} cancelled today</div>
+  </div>
 </div>
 
-<div class="cols">
+<div class="cols-2">
   <div>
-    <div class="card">
-      <header>
-        <h2>Last 7 days</h2>
-        <span class="hint">{{ week_total|pkr }} net</span>
+    <section class="panel">
+      <header class="panel-h">
+        <h2>Recent sales</h2>
+        <a class="btn ghost sm" href="{{ url_for('orders.index') }}">All orders</a>
       </header>
-      <div class="body">
-        {% if week_series %}
-          {% set peak = week_series|map(attribute='net_sales')|max %}
-          <div class="cols-chart">
-            {% for row in week_series %}
-              <div class="col" title="{{ row.label }}: {{ row.net_sales|pkr }}">
-                <div class="col-track">
-                  <div class="col-fill" style="height:{{ ((row.net_sales / peak * 100) if peak else 0)|round(0) }}%"></div>
-                </div>
-                <div class="col-label">{{ row.label }}</div>
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="empty"><strong>No sales in the last seven days</strong>Take a sale at the till to see the trend.</div>
-        {% endif %}
-      </div>
-    </div>
-
-    <div class="card">
-      <header>
-        <h2>Recent transactions</h2>
-        <a class="btn ghost small" href="{{ url_for('orders.index') }}">All orders</a>
-      </header>
-      <div class="body flush">
+      <div class="panel-b flush">
         {% if recent %}
-          <div class="table-wrap">
-            <table>
+          <div class="tbl-wrap">
+            <table class="data">
               <thead>
                 <tr><th>Order</th><th>Type</th><th>Status</th><th>Time</th><th class="num">Total</th></tr>
               </thead>
               <tbody>
                 {% for order in recent %}
                   <tr>
-                    <td><a href="{{ url_for('orders.show', order_id=order.id) }}" class="mono">{{ order.order_number }}</a></td>
+                    <td><a class="rowlink mono" href="{{ url_for('orders.show', order_id=order.id) }}">{{ order.order_number }}</a></td>
                     <td class="muted">{{ order.order_type|label }}</td>
                     <td><span class="badge {{ order.status|badge }}">{{ order.status|label }}</span></td>
-                    <td class="nowrap muted">{{ order.created_at|localtime }}</td>
+                    <td class="muted nowrap">{{ order.created_at|clock }}</td>
                     <td class="num">{{ order.grand_total|pkr }}</td>
                   </tr>
                 {% endfor %}
@@ -106,120 +73,138 @@
             </table>
           </div>
         {% else %}
-          <div class="empty"><strong>No orders yet</strong>Sales taken at the till appear here.</div>
+          <div class="empty"><strong>No orders yet</strong></div>
         {% endif %}
       </div>
-    </div>
+    </section>
 
-    {% if branches %}
-      <div class="card">
-        <header>
-          <h2>Branch performance today</h2>
-          <a class="btn ghost small" href="{{ url_for('reports.index', **report_today) }}">Compare</a>
-        </header>
-        <div class="body flush">
-          <table>
-            <thead><tr><th>Branch</th><th class="num">Orders</th><th class="num">Net sales</th><th class="num">Average</th></tr></thead>
-            <tbody>
-              {% for row in branches %}
-                <tr>
-                  <td>{{ row.code }} <span class="faint">{{ row.name }}</span></td>
-                  <td class="num">{{ row.orders }}</td>
-                  <td class="num">{{ row.net_sales|pkr }}</td>
-                  <td class="num">{{ row.average_order_value|pkr }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+    <section class="panel">
+      <header class="panel-h">
+        <h2>Sales trend</h2>
+        <span class="meta">{{ week_total|pkr }} · 7 days</span>
+      </header>
+      <div class="panel-b">
+        {% if week_series %}
+          {% set peak = week_series|map(attribute='net_sales')|max %}
+          <div class="chart">
+            {% for row in week_series %}
+              <div class="bar" title="{{ row.label }}: {{ row.net_sales|pkr }}">
+                <div class="track">
+                  <div class="fill" style="height:{{ ((row.net_sales / peak * 100) if peak else 0)|round(0) }}%"></div>
+                </div>
+                <div class="lbl">{{ row.label }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty"><strong>No sales in the last seven days</strong></div>
+        {% endif %}
       </div>
-    {% endif %}
+    </section>
+
+    <section class="panel">
+      <header class="panel-h">
+        <h2>Branch performance</h2>
+        <span class="meta">today</span>
+      </header>
+      <div class="panel-b flush">
+        {% if branches %}
+          <div class="tbl-wrap">
+            <table class="data">
+              <thead><tr><th>Branch</th><th class="num">Orders</th><th class="num">Net sales</th><th class="num">Average</th></tr></thead>
+              <tbody>
+                {% for row in branches %}
+                  <tr>
+                    <td>{{ row.code }} <span class="faint">{{ row.name }}</span></td>
+                    <td class="num">{{ row.orders }}</td>
+                    <td class="num">{{ row.net_sales|pkr }}</td>
+                    <td class="num">{{ row.average_order_value|pkr }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty"><strong>One branch in scope</strong></div>
+        {% endif %}
+      </div>
+    </section>
   </div>
 
   <div>
-    <div class="card">
-      <header><h2>Payments today</h2></header>
-      <div class="body flush">
-        {% if payments %}
-          <table>
-            <thead><tr><th>Method</th><th class="num">Count</th><th class="num">Amount</th></tr></thead>
-            <tbody>
-              {% for row in payments %}
-                <tr>
-                  <td>{{ row.label }}</td>
-                  <td class="num">{{ row.payments }}</td>
-                  <td class="num">{{ row.amount|pkr }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        {% else %}
-          <div class="empty"><strong>No payments captured</strong>Nothing paid today yet.</div>
-        {% endif %}
-      </div>
-    </div>
-
-    <div class="card">
-      <header><h2>Top products today</h2></header>
-      <div class="body flush">
+    <section class="panel">
+      <header class="panel-h">
+        <h2>Popular items</h2>
+        <span class="meta">today</span>
+      </header>
+      <div class="panel-b flush">
         {% if top_products %}
-          <table>
-            <tbody>
-              {% for row in top_products %}
-                <tr>
-                  <td>{{ row.name }}<div class="faint mono" style="font-size:11px">{{ row.sku }}</div></td>
-                  <td class="num">{{ row.quantity|qty }}</td>
-                  <td class="num">{{ row.revenue|pkr }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+          <div class="rows">
+            {% for row in top_products %}
+              <div class="row-item">
+                <span class="r-main">{{ row.name }}<div class="r-sub mono">{{ row.sku }}</div></span>
+                <span class="r-val">{{ row.quantity|qty }} · {{ row.revenue|pkr }}</span>
+              </div>
+            {% endfor %}
+          </div>
         {% else %}
-          <div class="empty"><strong>Nothing sold today</strong>Top sellers appear after the first order.</div>
+          <div class="empty"><strong>Nothing sold today</strong></div>
         {% endif %}
       </div>
-    </div>
+    </section>
 
-    <div class="card">
-      <header>
+    <section class="panel">
+      <header class="panel-h">
         <h2>Low stock</h2>
         {% if has_permission('inventory.adjust') %}
-          <a class="btn ghost small" href="{{ url_for('inventory.index', low='1') }}">View all</a>
+          <a class="btn ghost sm" href="{{ url_for('inventory.index', low='1') }}">All</a>
         {% endif %}
       </header>
-      <div class="body flush">
+      <div class="panel-b flush">
         {% if low_stock %}
-          <table>
-            <tbody>
-              {% for row in low_stock %}
-                <tr>
-                  <td>{{ row.name }}<div class="faint mono" style="font-size:11px">{{ row.sku }}</div></td>
-                  <td class="num">
-                    {{ row.quantity|qty }} {{ row.unit }}
-                    <div class="faint" style="font-size:11px">reorder at {{ row.reorder_level|qty }}</div>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+          <div class="rows">
+            {% for row in low_stock %}
+              <div class="row-item">
+                <span class="r-main">{{ row.name }}<div class="r-sub mono">{{ row.sku }}</div></span>
+                <span class="r-val">{{ row.quantity|qty }} {{ row.unit }}</span>
+              </div>
+            {% endfor %}
+          </div>
         {% else %}
-          <div class="empty"><strong>Nothing below the reorder level</strong>{{ ctx.branch.name if ctx.branch }}.</div>
+          <div class="empty"><strong>Nothing below reorder level</strong></div>
         {% endif %}
       </div>
-    </div>
+    </section>
 
-    <div class="card">
-      <header><h2>Today</h2></header>
-      <div class="body">
+    <section class="panel">
+      <header class="panel-h"><h2>Payments</h2></header>
+      <div class="panel-b flush">
+        {% if payments %}
+          <div class="rows">
+            {% for row in payments %}
+              <div class="row-item">
+                <span class="r-main">{{ row.label }}</span>
+                <span class="r-val">{{ row.payments }} · {{ row.amount|pkr }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty"><strong>No payments captured</strong></div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="panel">
+      <header class="panel-h"><h2>Today</h2></header>
+      <div class="panel-b">
         <dl class="kv">
-          <dt>Gross takings</dt><dd class="num">{{ summary.gross|pkr }}</dd>
-          <dt>Tax</dt><dd class="num">{{ summary.tax|pkr }}</dd>
-          <dt>Discounts</dt><dd class="num">{{ summary.discount|pkr }}</dd>
-          <dt>Items sold</dt><dd class="num">{{ summary.items_sold }}</dd>
-          <dt>Products on sale</dt><dd class="num">{{ product_count }}</dd>
+          <dt>Gross</dt><dd>{{ summary.gross|pkr }}</dd>
+          <dt>Discounts</dt><dd>{{ summary.discount|pkr }}</dd>
+          <dt>Items sold</dt><dd>{{ summary.items_sold }}</dd>
+          <dt>On sale</dt><dd>{{ product_count }}</dd>
         </dl>
       </div>
-    </div>
+    </section>
   </div>
 </div>
 {% endblock %}

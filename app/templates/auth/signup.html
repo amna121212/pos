@@ -3,87 +3,89 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Create account &middot; Amna POS</title>
+  <title>Create account · Amna POS</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
 </head>
 <body>
-<div class="auth-wrap">
-  <form class="auth-card wide" method="post" action="{{ url_for('auth.signup') }}" novalidate>
-    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-    <h1>Create account</h1>
-
-    {% if error %}
-      <div class="flashes">
-        <div class="flash error"><span>{{ error }}</span></div>
-      </div>
-    {% endif %}
-
-    <div class="auth-section"><h2>Business</h2></div>
-    <div class="form-grid">
-      <div class="form-row">
-        <label for="business_name">Business name</label>
-        <input type="text" id="business_name" name="business_name" maxlength="140" required
-               value="{{ form.get('business_name', '') }}" autofocus>
-      </div>
-      <div class="form-row">
-        <label for="business_type">Type</label>
-        <select id="business_type" name="business_type" required>
-          {% for value in business_types %}
-            <option value="{{ value }}" {{ 'selected' if form.get('business_type') == value }}>{{ value|label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="form-row">
-        <label for="city">City</label>
-        <input type="text" id="city" name="city" maxlength="80" required
-               value="{{ form.get('city', 'Lahore') }}">
-      </div>
-      <div class="form-row">
-        <label for="area">Branch area</label>
-        <input type="text" id="area" name="area" maxlength="100"
-               value="{{ form.get('area', '') }}" placeholder="Same as city">
-      </div>
-      <div class="form-row">
-        <label for="branch_name">First branch name</label>
-        <input type="text" id="branch_name" name="branch_name" maxlength="120" required
-               value="{{ form.get('branch_name', 'Main Branch') }}">
-      </div>
-      <div class="form-row">
-        <label for="tax_percent">Sales tax %</label>
-        <input type="number" step="0.001" min="0" max="99" id="tax_percent" name="tax_percent"
-               value="{{ form.get('tax_percent', '0') }}">
-      </div>
+<div class="auth">
+  <div class="auth-box" style="max-width:520px">
+    <div class="head">
+      <span class="brand-mark">A</span>
+      <h1>Create account</h1>
     </div>
 
-    <div class="auth-section"><h2>Owner login</h2></div>
-    <div class="form-row">
-      <label for="owner_name">Your name</label>
-      <input type="text" id="owner_name" name="owner_name" maxlength="100" required
-             value="{{ form.get('owner_name', '') }}">
-    </div>
-    <div class="form-row">
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" maxlength="150" autocomplete="username" required
-             value="{{ form.get('email', '') }}">
-    </div>
-    <div class="form-grid">
-      <div class="form-row">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" minlength="8" autocomplete="new-password" required>
-      </div>
-      <div class="form-row">
-        <label for="password_confirm">Repeat password</label>
-        <input type="password" id="password_confirm" name="password_confirm" minlength="8"
-               autocomplete="new-password" required>
-      </div>
-    </div>
+    <form method="post" action="{{ url_for('auth.signup') }}" novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
 
-    <button class="btn primary block" type="submit">Create account</button>
-    <div class="auth-foot">Already have a login? <a href="{{ url_for('auth.login') }}">Sign in</a></div>
-  </form>
+      {% if error %}
+        <div class="flashes"><div class="flash error"><span>{{ error }}</span></div></div>
+      {% endif %}
+
+      <div class="panel-h" style="margin:0 -20px 10px;padding-left:20px"><h2>Business</h2></div>
+      <div class="grid-form">
+        <div class="field">
+          <label for="business_name">Business name</label>
+          <input type="text" id="business_name" name="business_name" maxlength="140" required
+                 value="{{ form.get('business_name', '') }}" autofocus>
+        </div>
+        <div class="field">
+          <label for="business_type">Type</label>
+          <select id="business_type" name="business_type" required>
+            {% for value in business_types %}
+              <option value="{{ value }}" {{ 'selected' if form.get('business_type') == value }}>{{ value|label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="city">City</label>
+          <input type="text" id="city" name="city" maxlength="80" required value="{{ form.get('city', 'Lahore') }}">
+        </div>
+        <div class="field">
+          <label for="area">Branch area</label>
+          <input type="text" id="area" name="area" maxlength="100" value="{{ form.get('area', '') }}">
+        </div>
+        <div class="field">
+          <label for="branch_name">First branch</label>
+          <input type="text" id="branch_name" name="branch_name" maxlength="120" required
+                 value="{{ form.get('branch_name', 'Main Branch') }}">
+        </div>
+        <div class="field">
+          <label for="tax_percent">Sales tax %</label>
+          <input type="number" step="0.001" min="0" max="99" id="tax_percent" name="tax_percent"
+                 value="{{ form.get('tax_percent', '0') }}">
+        </div>
+      </div>
+
+      <div class="panel-h" style="margin:14px -20px 10px;padding-left:20px"><h2>Owner login</h2></div>
+      <div class="field">
+        <label for="owner_name">Your name</label>
+        <input type="text" id="owner_name" name="owner_name" maxlength="100" required value="{{ form.get('owner_name', '') }}">
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" maxlength="150" autocomplete="username" required
+               value="{{ form.get('email', '') }}">
+      </div>
+      <div class="grid-form">
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" minlength="8" autocomplete="new-password" required>
+        </div>
+        <div class="field">
+          <label for="password_confirm">Repeat password</label>
+          <input type="password" id="password_confirm" name="password_confirm" minlength="8"
+                 autocomplete="new-password" required>
+        </div>
+      </div>
+
+      <button class="btn pri block" type="submit">Create account</button>
+    </form>
+
+    <div class="foot">Already have a login? <a href="{{ url_for('auth.login') }}">Sign in</a></div>
+  </div>
 </div>
 </body>
 </html>
